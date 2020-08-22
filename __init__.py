@@ -119,21 +119,28 @@ def load_edit_images():
     #    img.id_image = bpy.data.images["Toad Sphere Render.png"]
     #    edit_images.append(img)
 
-    folder_name = ''
-    for filename in os.listdir(folder_name):
-        img = EditImage()
-        img.id_image = load_image(filename,
-            dirname=folder_name,
-            place_holder=False,
-            recursive=False,
-            ncase_cmp=True,
-            convert_callback=None,
-            verbose=False,
-            relpath=None,
-            check_existing=True,
-            force_reload=False)
-        edit_images.append(img)
-        img.name = int(filename.split('.')[0])
+    addon_prefs = bpy.context.preferences.addons[__name__].preferences
+    folder_name = addon_prefs.edit_shots_folder
+
+    try:
+        for filename in os.listdir(folder_name):
+            img = EditImage()
+            img.id_image = load_image(filename,
+                dirname=folder_name,
+                place_holder=False,
+                recursive=False,
+                ncase_cmp=True,
+                convert_callback=None,
+                verbose=False,
+                relpath=None,
+                check_existing=True,
+                force_reload=False)
+            edit_images.append(img)
+            img.name = int(filename.split('.')[0])
+    except FileNotFoundError:
+        # self.report({'ERROR'}, # Need an operator
+        print(
+            f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
 
     edit_images.sort(key=lambda x: x.name, reverse=False)
 
@@ -147,7 +154,7 @@ def load_edit_images():
     image_aspect_ratio = image_w / image_h
 
     num_images = len(edit_images)
-    print(num_images)
+    print(f"Loaded {num_images} images.")
 
     #text_info_h = 50
     #total_w = image_w*num_images
@@ -204,10 +211,30 @@ def draw_text(self, context):
     blf.draw(font_id, "Frog")
 
 
+# Settings ####################################################################
+
+
+class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
+    bl_idname = __name__
+
+    edit_shots_folder: StringProperty(
+        name="Edit Shots",
+        description="Folder with image thumbnails for each shot",
+        default="",
+        subtype="FILE_PATH"
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        col = layout.column()
+        col.prop(self, "edit_shots_folder")
+
 
 # Add-on Registration #########################################################
 
 classes = (
+    SEQUENCER_EditBreakdown_Preferences,
 )
 
 draw_handles = []
