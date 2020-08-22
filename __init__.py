@@ -74,50 +74,7 @@ class EditImage:
 
 edit_images = []
 
-
-shader_img = gpu.shader.from_builtin('2D_IMAGE')
-batch_img = batch_for_shader(
-    shader_img, 'TRI_FAN',
-    {
-        "pos": ((350, 100), (550, 100), (550, 200), (350, 200)),
-        "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1)),
-    },
-)
-
-#image = None
-
-# def load_image():
-#    global image
-#    image = bpy.data.images["Toad Sphere Render.png"]
-#    if image.gl_load():
-#        raise Exception()
-
-
-#def draw_image():
-#   if image == None:
-#      load_image()
-
-    #bgl.glActiveTexture(bgl.GL_TEXTURE0)
-    #bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
-
-#    shader_img.bind()
-#    shader_img.uniform_int("image", 0)
-#    batch_img.draw(shader_img)
-
-
-#def draw_image2():
-#    if image == None:
-#        load_image()
-
-#    draw_texture_2d(image.bindcode, (600, 100), 200, 100)
-
-
 def load_edit_images():
-
-    #for i in range(200):
-    #    img = EditImage()
-    #    img.id_image = bpy.data.images["Toad Sphere Render.png"]
-    #    edit_images.append(img)
 
     addon_prefs = bpy.context.preferences.addons[__name__].preferences
     folder_name = addon_prefs.edit_shots_folder
