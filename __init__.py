@@ -29,6 +29,7 @@ bl_info = {
     "category": "Sequencer",
 }
 
+import logging
 import os
 import bpy
 from bpy.types import Operator, Panel, AddonPreferences
@@ -42,6 +43,8 @@ from gpu_extras.batch import batch_for_shader
 import blf
 
 from bpy_extras.image_utils import load_image
+
+log = logging.getLogger(__name__)
 
 
 # Operators ###################################################################
@@ -96,7 +99,7 @@ def load_edit_images():
             img.name = int(filename.split('.')[0])
     except FileNotFoundError:
         # self.report({'ERROR'}, # Need an operator
-        print(
+        log.warning(
             f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
 
     edit_images.sort(key=lambda x: x.name, reverse=False)
@@ -111,7 +114,7 @@ def load_edit_images():
     image_aspect_ratio = image_w / image_h
 
     num_images = len(edit_images)
-    print(f"Loaded {num_images} images.")
+    log.info(f"Loaded {num_images} images.")
 
     #text_info_h = 50
     #total_w = image_w*num_images
@@ -198,7 +201,7 @@ draw_handles = []
 space = bpy.types.SpaceImageEditor # SpaceSequenceEditor
 
 def register():
-    print("-----------------Registering Edit Breakdown-------------------------")
+    log.info("------Registering Edit Breakdown-------------------")
 
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -207,12 +210,12 @@ def register():
     draw_handles.append(space.draw_handler_add(draw_edit_images, (), 'WINDOW', 'POST_PIXEL'))
     font_info["handler"] = space.draw_handler_add(draw_text, (None, None), 'WINDOW', 'POST_PIXEL')
 
-    print("-----------------Done Registering---------------------------------")
+    log.info("------Done Registering-----------------------------")
 
 
 def unregister():
 
-    print("-----------------Unregistering Edit Breakdown-----------------------")
+    log.info("------Unregistering Edit Breakdown-----------------")
 
     for handle in draw_handles:
         space.draw_handler_remove(handle, 'WINDOW')
@@ -220,7 +223,7 @@ def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
 
-    print("-----------------Done Unregistering--------------------------------")
+    log.info("------Done Unregistering---------------------------")
 
 
 if __name__ == "__main__":
