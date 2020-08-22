@@ -13,7 +13,7 @@ Get insight on the complexity of an edit.
 2. In Blender's `Edit > Preferences > Add-ons`, find this add-on, expand it, and click `Remove`.
 3. Click `Install` and select the ZIP.
 
-Alternatively: this repository can be **cloned** to a folder on disk and that folder linked to the `scripts/addons` folder of the Blender executable. This way, the add-on and be kept up to date with `git pull` without the need to remove/install.
+**Alternatively:** this repository can be **cloned** to a folder on disk and that folder linked to the `scripts/addons` folder of the Blender executable. This way, the add-on and be kept up to date with `git pull` without the need to remove/install it.
 
 ### Requirements
 - Blender 2.90 or later.
