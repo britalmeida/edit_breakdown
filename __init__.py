@@ -30,6 +30,7 @@ bl_info = {
 }
 
 import logging
+import math
 import os
 import bpy
 from bpy.types import Operator, Panel, AddonPreferences
@@ -52,8 +53,8 @@ log = logging.getLogger(__name__)
 # UI ##########################################################################
 
 vertices = (
-    (0, 0), (1900, 0),
-    (0, 933), (1900, 933))
+    (0, 0), (4900, 0),
+    (0, 2933), (4900, 2933))
 
 indices = ((0, 1, 2), (2, 1, 3))
 
@@ -67,24 +68,28 @@ def draw_background():
     batch.draw(shader)
 
 
-edit_image_size = (100, 100/1.7777)
-spacing = (9, 6)
-num_images_per_row = 17
-class EditImage:
-    id_image = None
-    name = "Frog"
-    pos = (0, 0)
+# Drawing Thumbnail Images ########################################################################
 
-edit_images = []
+class ThumbnailImage:
+    """Displayed thumbnail data"""
 
-def load_edit_images():
+    id_image = None # A Blender ID Image, which can be rendered by bgl.
+    pos = (0, 0) # Position in px where the image should be displayed within a region.
+    name = ""
+
+thumbnail_images = [] # All the loaded thumbnails for an edit.
+thumbnail_size = (0, 0) # The size in px at which the thumbnails should be displayed.
+
+
+def load_edit_thumbnails():
+    """Load all images from disk as resources to be rendered by the GPU"""
 
     addon_prefs = bpy.context.preferences.addons[__name__].preferences
     folder_name = addon_prefs.edit_shots_folder
 
     try:
         for filename in os.listdir(folder_name):
-            img = EditImage()
+            img = ThumbnailImage()
             img.id_image = load_image(filename,
                 dirname=folder_name,
                 place_holder=False,
@@ -95,66 +100,158 @@ def load_edit_images():
                 relpath=None,
                 check_existing=True,
                 force_reload=False)
-            edit_images.append(img)
+            thumbnail_images.append(img)
             img.name = int(filename.split('.')[0])
     except FileNotFoundError:
         # self.report({'ERROR'}, # Need an operator
         log.warning(
             f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
 
-    edit_images.sort(key=lambda x: x.name, reverse=False)
+    thumbnail_images.sort(key=lambda x: x.name, reverse=False)
 
-    for img in edit_images:
+    for img in thumbnail_images:
         if img.id_image.gl_load():
             raise Exception()
 
-    # Assume all images in the edit have the same aspect ratio
-    image_w = edit_images[0].id_image.size[0]
-    image_h = edit_images[0].id_image.size[1]
-    image_aspect_ratio = image_w / image_h
-
-    num_images = len(edit_images)
+    num_images = len(thumbnail_images)
     log.info(f"Loaded {num_images} images.")
 
-    #text_info_h = 50
-    #total_w = image_w*num_images
-    #total_h = (image_h+text_info_h)*num_images
 
+def fit_thumbnails_in_region():
+    """Calculate the thumbnails' size and where to render each one so they fit the given region
+
+    The thumbnail size is roughly calculated by dividing the available region area by the number
+    of images and preserving the image aspect ratio. However, this calculation will be off as
+    soon as the images don't exactly fit a row or the last row is incomplete.
+    To account for that, we take some space away from the region area, which will be used by
+    margins and spacing between images. The thumbnail size is calculated to fit the smaller area.
+    This way, images can be made to exactly fit a row by taking up whitespace.
+    """
+
+    # If there are no images to fit, we're done!
+    num_images = len(thumbnail_images)
+    if num_images == 0:
+        return
+
+    log.debug("------Fit Images-------------------");
+
+    global thumbnail_size
+
+    # Calculate the header height
+    system_prefs = bpy.context.preferences.system
+    pixel_size = system_prefs.pixel_size # includes UI scale
+    dpi = system_prefs.dpi
+    header_height = 26 * pixel_size * dpi / 72
+    # Get size of the region containing the thumbnails.
     region = bpy.context.region
-    available_w = region.width
-    available_h = region.height
-    #available_aspect_ratio = available_w / available_h
+    total_available_w = region.width
+    total_available_h = region.height - header_height # The header is included in the region height
+    log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
-    #global edit_image_size
-    #if available_aspect_ratio < image_aspect_ratio:
-    #    print( width bound)
-    #    edit_image_size = (available_w -50, (available_w -50) / available_aspect_ratio)
-    #else:
-    #    edit_image_size = ((available_h -80) / available_aspect_ratio, (available_h -80))
+    # Get the available size, discounting white space size.
+    total_spacing = (150, 150) 
+    min_margin = 40 # Arbitrary 20px minimum for the top,bottom,left and right margins
+    available_w = total_available_w - total_spacing[0]
+    available_h = total_available_h - total_spacing[1]
+    max_thumb_size = (total_available_w - min_margin, total_available_h - min_margin)
 
-    num_images_per_column = num_images / num_images_per_row
+    # Get the original size and aspect ratio of the images.
+    # Assume all images in the edit have the same aspect ratio.
+    original_image_w = thumbnail_images[0].id_image.size[0]
+    original_image_h = thumbnail_images[0].id_image.size[1]
+    image_aspect_ratio = original_image_w / original_image_h
+    log.debug(f"Image a.ratio={image_aspect_ratio:.2f} ({original_image_w}x{original_image_h})")
 
-    start_pos_x = 25
-    start_pos_y = available_h - edit_image_size[1] - 40
+    # Calculate by how much images need to be scaled in order to fit. (won't be perfect)
+    available_area = available_w * available_h
+    thumbnail_area = available_area / num_images
+    # If the pixel area gets very small, early out, not worth rendering.
+    if thumbnail_area < 20:
+        thumbnail_size = (0, 0)
+        return
+    scale_factor = math.sqrt(thumbnail_area / (original_image_w * original_image_h))
+    log.debug(f"Scale factor: {scale_factor:.3f}");
+    thumbnail_size = (original_image_w * scale_factor,
+                      original_image_h * scale_factor)
 
-    c = 0
-    for img in edit_images:
+    num_images_per_row = math.ceil(available_w / thumbnail_size[0])
+    num_images_per_col = math.ceil(num_images / num_images_per_row)
+    log.debug(f"Thumbnail width  {thumbnail_size[0]:.3f}px, # per row: {num_images_per_row:.3f}")
+    log.debug(f"Thumbnail height {thumbnail_size[1]:.3f}px, # per col: {num_images_per_col:.3f}")
+
+    # Make sure that both a row and a column of images at the current scale will fit.
+    # It is possible that, with few images and a region aspect ratio that is very different from
+    # the images', there is enough area, but not enough length in one direction.
+    # In that case, reduce the thumbnail size further.
+    if original_image_w * scale_factor * num_images_per_row > max_thumb_size[0]:
+        scale_factor = max_thumb_size[0] / (original_image_w * num_images_per_row)
+    if original_image_h * scale_factor * num_images_per_col > max_thumb_size[1]:
+        scale_factor = max_thumb_size[1] / (original_image_h * num_images_per_col)
+    log.debug(f"Reduced scale factor: {scale_factor:.3f}");
+
+    thumbnail_size = (original_image_w * scale_factor,
+                      original_image_h * scale_factor)
+
+    # Get the remaining space not occupied by thumbnails and split it into margins
+    # and spacing between the thumbnails.
+    def calculate_spacing(total_available, thumb_size, num_thumbs):
+
+        available_space = total_available - thumb_size * num_thumbs
+        log.debug(f"remaining space {available_space:.2f}px")
+
+        spacing = 0
+        if num_thumbs > 1:
+            spacing = (available_space - min_margin) / (num_thumbs - 1)
+            log.debug(f"spacing={spacing:.3f}")
+            # Spacing between images should never be bigger than the margins
+            spacing = min(math.ceil(spacing), min_margin)
+
+        margin = (available_space - spacing * (num_thumbs - 1)) / 2
+        log.debug(f"margins={margin:.3f}")
+        margin = math.floor(margin)
+
+        return (margin, spacing)
+
+    log.debug(f"X")
+    space_w = calculate_spacing(total_available_w, thumbnail_size[0], num_images_per_row)
+    log.debug(f"Y")
+    space_h = calculate_spacing(total_available_h, thumbnail_size[1], num_images_per_col)
+
+    margins = (space_w[0], space_h[0])
+    spacing = (space_w[1], space_h[1])
+
+    # Set the position of each thumbnail
+    start_pos_x = margins[0]
+    start_pos_y = total_available_h - thumbnail_size[1] - margins[1]
+    last_start_pos_x = math.ceil(margins[0] + (num_images_per_row - 1)* (thumbnail_size[0] + spacing[0]))
+
+    for img in thumbnail_images:
         img.pos = (start_pos_x, start_pos_y)
-        #print(img.pos)
-        start_pos_x += edit_image_size[0] + spacing[0]
-        c+=1
-        if c == num_images_per_row:
-            c = 0
-            start_pos_x = 25
-            start_pos_y -= edit_image_size[1] + spacing[1] #text_info_h
+        start_pos_x += thumbnail_size[0] + spacing[0]
+        # Next row
+        if start_pos_x > last_start_pos_x:
+            start_pos_x = margins[0]
+            start_pos_y -= thumbnail_size[1] + spacing[1]
 
 
-def draw_edit_images():
-    if not edit_images:
-        load_edit_images()
+def draw_edit_thumbnails():
+    """Render the edit thumbnails"""
 
-    for img in edit_images:
-        draw_texture_2d(img.id_image.bindcode, img.pos, edit_image_size[0], edit_image_size[1])
+    # Load the images the first time they're needed.
+    if not thumbnail_images:
+        load_edit_thumbnails()
+
+    # Position the images according to the available space.
+    fit_thumbnails_in_region()
+
+    # If the resulting layout makes the images too small, skip rendering.
+    if thumbnail_size[0] <= 5 or thumbnail_size[1] <= 5:
+        return
+
+    # Render each image.
+    for img in thumbnail_images:
+        draw_texture_2d(img.id_image.bindcode, img.pos,
+            thumbnail_size[0], thumbnail_size[1])
 
 
 # Font ####################################################################
@@ -207,7 +304,7 @@ def register():
         bpy.utils.register_class(cls)
 
     draw_handles.append(space.draw_handler_add(draw_background, (), 'WINDOW', 'POST_PIXEL'))
-    draw_handles.append(space.draw_handler_add(draw_edit_images, (), 'WINDOW', 'POST_PIXEL'))
+    draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'WINDOW', 'POST_PIXEL'))
     font_info["handler"] = space.draw_handler_add(draw_text, (None, None), 'WINDOW', 'POST_PIXEL')
 
     log.info("------Done Registering-----------------------------")
