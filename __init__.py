@@ -126,15 +126,25 @@ def fit_thumbnails_in_region():
 
     global thumbnail_size
 
-    # Calculate the header height
-    system_prefs = bpy.context.preferences.system
-    pixel_size = system_prefs.pixel_size # includes UI scale
-    dpi = system_prefs.dpi
-    header_height = 26 * pixel_size * dpi / 72
     # Get size of the region containing the thumbnails.
     region = bpy.context.region
     total_available_w = region.width
-    total_available_h = region.height - header_height # The header is included in the region height
+    total_available_h = region.height
+    start_w = 0 # If the tools side panel is open, the thumbnails must be shifted to the right
+    # If the header and side panels render on top of the region, discount their size.
+    # The thumbnails should not be occluded by the UI, even if set to transparent.
+    system_prefs = bpy.context.preferences.system
+    if system_prefs.use_region_overlap:
+        area = bpy.context.area
+        for r in area.regions:
+            if r.type == 'HEADER' and r.height > 1:
+                total_available_h -= r.height
+            if r.type == 'UI' and r.width > 1:
+                total_available_w -= r.width
+            if r.type == 'TOOLS' and r.width > 1:
+                total_available_w -= r.width
+                start_w = r.width
+
     log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
     # Get the available size, discounting white space size.
@@ -210,16 +220,16 @@ def fit_thumbnails_in_region():
     spacing = (space_w[1], space_h[1])
 
     # Set the position of each thumbnail
-    start_pos_x = margins[0]
+    start_pos_x = start_w + margins[0]
     start_pos_y = total_available_h - thumbnail_size[1] - margins[1]
-    last_start_pos_x = math.ceil(margins[0] + (num_images_per_row - 1)* (thumbnail_size[0] + spacing[0]))
+    last_start_pos_x = start_w + math.ceil(margins[0] + (num_images_per_row - 1)* (thumbnail_size[0] + spacing[0]))
 
     for img in thumbnail_images:
         img.pos = (start_pos_x, start_pos_y)
         start_pos_x += thumbnail_size[0] + spacing[0]
         # Next row
         if start_pos_x > last_start_pos_x:
-            start_pos_x = margins[0]
+            start_pos_x = start_w + margins[0]
             start_pos_y -= thumbnail_size[1] + spacing[1]
 
 
