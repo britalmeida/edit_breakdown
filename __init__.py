@@ -36,7 +36,7 @@ import os
 import bpy
 from bpy_extras.image_utils import load_image
 from bpy.types import AddonPreferences, Operator, Panel, PropertyGroup
-from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty, PointerProperty
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, IntProperty, StringProperty, PointerProperty
 
 if "draw_utils" in locals():
     import importlib
@@ -55,8 +55,12 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     shot_name: StringProperty(name="Shot Name")
     frame_start: IntProperty(name="Frame")
-    duration: IntProperty(name="Duration")
+    duration: IntProperty(name="Duration", description="Number of frames in this shot")
+    character_count: IntProperty(name="Character Count")
+    animation_complexity: EnumProperty(name="Anim Complexity",
+        items=[('1', '1', '1'), ('2', '2', '2'), ('3', '3', '3'), ('4', '4', '4'), ('5', '5', '5')])
     has_fx: BoolProperty(name="Has Effects")
+    has_crowd: BoolProperty(name="Has Crowd")
     thumbnail_image = None
 
 
@@ -94,7 +98,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         fps = 30
         total_seconds = total_duration_frames/fps
         log.info(f"Edit has {total_seconds:.1f} seconds, with a total of {total_duration_frames} frames")
-
 
     @classmethod
     def poll(cls, context):
@@ -165,6 +168,38 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         total_seconds = total_duration_frames/fps
         col.label(text=f"Frames: {total_duration_frames}")
         col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
+
+
+class SEQUENCER_PT_edit_breakdown_shot(Panel):
+    bl_label = "Shot"
+    bl_category = "Edit Breakdown"
+    bl_space_type = 'IMAGE_EDITOR'
+    bl_region_type = 'UI'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.type == 'IMAGE_EDITOR'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        selected_shot = context.scene.edit_breakdown.shots[0] # WIP
+
+        col = layout.column()
+        col.prop(selected_shot, "shot_name")
+        sub = col.column()
+        sub.enabled = False
+        sub.prop(selected_shot, "duration", text="Num Frames")
+        # WIP
+        fps = 30
+        total_seconds = selected_shot.duration/fps
+        col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
+        col.prop(selected_shot, "animation_complexity")
+        col.prop(selected_shot, "character_count")
+        col.prop(selected_shot, "has_crowd")
+        col.prop(selected_shot, "has_fx")
 
 
 def draw_sequencer_header_extension(self, context):
@@ -406,6 +441,7 @@ classes = (
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_PT_edit_breakdown_overview,
+    SEQUENCER_PT_edit_breakdown_shot,
 )
 
 draw_handles = []
