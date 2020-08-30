@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-# <pep8-80 compliant>
+# <pep8 compliant>
 
 bl_info = {
     "name": "Edit Breakdown",
@@ -32,40 +32,29 @@ bl_info = {
 import logging
 import math
 import os
+
 import bpy
-from bpy.types import Operator, Panel, AddonPreferences
-from bpy.props import BoolProperty, StringProperty, EnumProperty
-
-import bgl
-import gpu
-from gpu_extras.presets import draw_texture_2d
-from gpu_extras.batch import batch_for_shader
-
-import blf
-
 from bpy_extras.image_utils import load_image
+from bpy.types import AddonPreferences
+from bpy.props import StringProperty
+
+if "draw_utils" in locals():
+    import importlib
+
+    importlib.reload(draw_utils)
+else:
+    from . import draw_utils
 
 log = logging.getLogger(__name__)
 
 
 # Operators ###################################################################
 
-# UI ##########################################################################
-
-vertices = (
-    (0, 0), (4900, 0),
-    (0, 2933), (4900, 2933))
-
-indices = ((0, 1, 2), (2, 1, 3))
-
-shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-batch = batch_for_shader(shader, 'TRIS', {"pos": vertices}, indices=indices)
-
+# UI ##############################################################################################
 
 def draw_background():
-    shader.bind()
-    shader.uniform_float("color", (0.18, 0.18, 0.18, 1.0))
-    batch.draw(shader)
+    region = bpy.context.region
+    draw_utils.draw_background((region.width, region.height))
 
 
 # Drawing Thumbnail Images ########################################################################
@@ -249,23 +238,14 @@ def draw_edit_thumbnails():
         return
 
     # Render each image.
-    for img in thumbnail_images:
-        draw_texture_2d(img.id_image.bindcode, img.pos,
-            thumbnail_size[0], thumbnail_size[1])
+    draw_utils.draw_thumbnails(thumbnail_images, thumbnail_size)
 
 
-# Font ####################################################################
+def draw_overlay():
+    """Draw overlay effects on top of the thumbnails"""
 
-font_info = {
-    "font_id": 0, # Default font.
-    "handler": None,
-}
-
-def draw_text(self, context):
-    font_id = font_info["font_id"]
-    blf.position(font_id, 600, 80, 0)
-    blf.size(font_id, 16, 72)
-    blf.draw(font_id, "Frog")
+    #draw_utils.draw_overlay()
+    pass
 
 
 # Settings ####################################################################
@@ -305,7 +285,8 @@ def register():
 
     draw_handles.append(space.draw_handler_add(draw_background, (), 'WINDOW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'WINDOW', 'POST_PIXEL'))
-    font_info["handler"] = space.draw_handler_add(draw_text, (None, None), 'WINDOW', 'POST_PIXEL')
+    draw_handles.append(space.draw_handler_add(draw_overlay, (), 'WINDOW', 'POST_PIXEL'))
+    draw_handles.append(space.draw_handler_add(draw_utils.draw_text, (None, None), 'WINDOW', 'POST_PIXEL'))
 
     log.info("------Done Registering-----------------------------")
 
