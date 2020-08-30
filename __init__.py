@@ -36,7 +36,7 @@ import os
 import bpy
 from bpy_extras.image_utils import load_image
 from bpy.types import AddonPreferences, Operator, PropertyGroup
-from bpy.props import BoolProperty, IntProperty, StringProperty, PointerProperty
+from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty, PointerProperty
 
 if "draw_utils" in locals():
     import importlib
@@ -50,14 +50,25 @@ log = logging.getLogger(__name__)
 
 # Data ########################################################################
 
+class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
+    """Properties of a shot."""
+
+    shot_name: StringProperty(name="Shot Name")
+    frame_start: IntProperty(name="Frame")
+    duration: IntProperty(name="Duration")
+    has_fx: BoolProperty(name="Has Effects")
+    thumbnail_image = None
+
+
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
-    edit_shots_folder: StringProperty(
-        name="Edit Shots",
-        description="Folder with image thumbnails for each shot",
-        default="",
-        subtype="FILE_PATH"
+    shots: CollectionProperty(
+        type=SEQUENCER_EditBreakdown_Shot,
+        name="Shots",
+        description="Set of shots that form the edit",
     )
+
+    total_shot_duration = 0
 
 
 # Operators ###################################################################
@@ -67,6 +78,23 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_label = "Sync Edit Breakdown"
     bl_description = "Ensure the edit breakdown is up-to-date with the edit"
     bl_options = {'REGISTER'}
+
+    def calculate_shots_duration(self, context):
+        shots = context.scene.edit_breakdown.shots
+
+        total_duration_frames = 0
+        last_frame = max(context.scene.frame_end, shots[-1].frame_start)
+        for shot in reversed(shots):
+            shot.duration = last_frame - shot.frame_start
+            last_frame = shot.frame_start
+            total_duration_frames += shot.duration
+
+        context.scene.edit_breakdown.total_shot_duration = total_duration_frames
+        # WIP
+        fps = 30
+        total_seconds = total_duration_frames/fps
+        log.info(f"Edit has {total_seconds:.1f} seconds, with a total of {total_duration_frames} frames")
+
 
     @classmethod
     def poll(cls, context):
@@ -82,6 +110,26 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         sequence_ed = context.scene.sequence_editor
         addon_prefs = context.preferences.addons[__name__].preferences
+        shots = context.scene.edit_breakdown.shots
+
+        # Clear the previous breakdown data
+        thumbnail_images.clear()
+        shots.clear()
+
+        # Load data from the sequence markers marked for use in the edit breakdown
+        def WIP_fake_behaviour():
+            load_edit_thumbnails()
+            for img in thumbnail_images:
+                new_shot = shots.add()
+                new_shot.shot_name = str(img.name)
+                new_shot.frame_start = img.name
+                new_shot.thumbnail_image = img
+        WIP_fake_behaviour()
+
+        self.calculate_shots_duration(context)
+
+        # Position the images according to the available space.
+        fit_thumbnails_in_region()
 
         return {'FINISHED'}
 
@@ -325,6 +373,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 classes = (
     SEQUENCER_EditBreakdown_Preferences,
+    SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_OT_sync_edit_breakdown,
 )
