@@ -35,8 +35,8 @@ import os
 
 import bpy
 from bpy_extras.image_utils import load_image
-from bpy.types import AddonPreferences
-from bpy.props import StringProperty
+from bpy.types import AddonPreferences, Operator, PropertyGroup
+from bpy.props import BoolProperty, IntProperty, StringProperty, PointerProperty
 
 if "draw_utils" in locals():
     import importlib
@@ -48,9 +48,52 @@ else:
 log = logging.getLogger(__name__)
 
 
+# Data ########################################################################
+
+class SEQUENCER_EditBreakdown_Data(PropertyGroup):
+
+    edit_shots_folder: StringProperty(
+        name="Edit Shots",
+        description="Folder with image thumbnails for each shot",
+        default="",
+        subtype="FILE_PATH"
+    )
+
+
 # Operators ###################################################################
 
+class SEQUENCER_OT_sync_edit_breakdown(Operator):
+    bl_idname = "sequencer.sync_edit_breakdown"
+    bl_label = "Sync Edit Breakdown"
+    bl_description = "Ensure the edit breakdown is up-to-date with the edit"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action.
+
+        Recreate the edit breakdown data based on the current edit.
+        """
+
+        log.debug("sync_edit_breakdown: execute")
+
+        sequence_ed = context.scene.sequence_editor
+        addon_prefs = context.preferences.addons[__name__].preferences
+
+        return {'FINISHED'}
+
+
+
 # UI ##############################################################################################
+
+
+def draw_sequencer_header_extension(self, context):
+    layout = self.layout
+    layout.operator("sequencer.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
+
 
 def draw_background():
     region = bpy.context.region
@@ -282,6 +325,8 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 classes = (
     SEQUENCER_EditBreakdown_Preferences,
+    SEQUENCER_EditBreakdown_Data,
+    SEQUENCER_OT_sync_edit_breakdown,
 )
 
 draw_handles = []
@@ -292,6 +337,20 @@ def register():
 
     for cls in classes:
         bpy.utils.register_class(cls)
+
+    bpy.types.TimelineMarker.use_for_edit_breakdown = BoolProperty(
+        name="Use For Edit Breakdown",
+        default=True,
+        description="If this marker should be included as a shot in the edit breakdown view",
+    )
+
+    bpy.types.Scene.edit_breakdown = PointerProperty(
+        name="Edit Breakdown",
+        type=SEQUENCER_EditBreakdown_Data,
+        description="Shot data used by the Edit Breakdown add-on.",
+    )
+
+    bpy.types.SEQUENCER_HT_header.append(draw_sequencer_header_extension)
 
     draw_handles.append(space.draw_handler_add(draw_background, (), 'WINDOW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'WINDOW', 'POST_PIXEL'))
@@ -307,6 +366,11 @@ def unregister():
 
     for handle in draw_handles:
         space.draw_handler_remove(handle, 'WINDOW')
+
+    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension)
+
+    del bpy.types.TimelineMarker.use_for_edit_breakdown
+    del bpy.types.Scene.edit_breakdown
 
     for cls in classes:
         bpy.utils.unregister_class(cls)
