@@ -35,7 +35,7 @@ import os
 
 import bpy
 from bpy_extras.image_utils import load_image
-from bpy.types import AddonPreferences, Operator, PropertyGroup
+from bpy.types import AddonPreferences, Operator, Panel, PropertyGroup
 from bpy.props import BoolProperty, CollectionProperty, IntProperty, StringProperty, PointerProperty
 
 if "draw_utils" in locals():
@@ -136,6 +136,35 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
 
 # UI ##############################################################################################
+
+
+class SEQUENCER_PT_edit_breakdown_overview(Panel):
+    bl_label = "Overview"
+    bl_category = "Edit Breakdown"
+    bl_space_type = 'IMAGE_EDITOR'
+    bl_region_type = 'UI'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.type == 'IMAGE_EDITOR'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        edit_breakdown = context.scene.edit_breakdown
+
+        col = layout.column()
+        col.label(text=f"Shots: {len(edit_breakdown.shots)}")
+
+        total_duration_frames = edit_breakdown.total_shot_duration
+        total_duration_frames = 14189
+        # WIP
+        fps = 30
+        total_seconds = total_duration_frames/fps
+        col.label(text=f"Frames: {total_duration_frames}")
+        col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
 
 
 def draw_sequencer_header_extension(self, context):
@@ -376,6 +405,7 @@ classes = (
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_OT_sync_edit_breakdown,
+    SEQUENCER_PT_edit_breakdown_overview,
 )
 
 draw_handles = []
