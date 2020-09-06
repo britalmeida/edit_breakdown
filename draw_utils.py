@@ -22,6 +22,7 @@ import logging
 
 import bgl
 import blf
+import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
@@ -31,21 +32,29 @@ log = logging.getLogger(__name__)
 # Color constants
 
 background_color = (0.18, 0.18, 0.18, 1.0)
+hover_effect_color = (1.0, 1.0, 1.0, 0.05)
+theme_selected_object = bpy.context.preferences.themes['Default'].view_3d.object_selected
+theme_active_object = bpy.context.preferences.themes['Default'].view_3d.object_active
+selection_color = (theme_active_object.r, theme_active_object.g, theme_active_object.b, 1.0)
 
 
 # Shaders and batches
 
 
-indices = ((0, 1, 2), (2, 1, 3))
+line_indices = ((0, 1), (1, 2), (2, 3), (3, 0))
+rect_indices = ((0, 1, 2), (2, 1, 3))
 rect_coords = ((0, 0), (1, 0), (1, 1), (0, 1))
 
 ucolor_2d_shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-ucolor_2d_rect_batch = batch_for_shader(ucolor_2d_shader, 'TRI_FAN', {"pos": rect_coords})
+ucolor_2d_rect_batch = batch_for_shader(ucolor_2d_shader, 'TRI_FAN',
+    {"pos": rect_coords})
+
+ucolor_lines_rect_batch = batch_for_shader(ucolor_2d_shader, 'LINES',
+    {"pos": rect_coords}, indices=line_indices)
 
 image_2d_shader = gpu.shader.from_builtin('2D_IMAGE')
 image_2d_batch = batch_for_shader(image_2d_shader, 'TRI_FAN',
-    {"pos" : rect_coords,
-     "texCoord" : rect_coords})
+    {"pos": rect_coords, "texCoord": rect_coords})
 
 
 def draw_background(size):
@@ -60,8 +69,8 @@ def draw_background(size):
         ucolor_2d_rect_batch.draw(ucolor_2d_shader)
 
 
-def draw_rectangle_2d(position, size):
-    """Draw a 2D rectangle"""
+def draw_hover_highlight(position, size):
+    """Draw a rectangular highlight"""
 
     bgl.glEnable(bgl.GL_BLEND)
 
@@ -70,16 +79,23 @@ def draw_rectangle_2d(position, size):
         gpu.matrix.scale(size)
 
         ucolor_2d_shader.bind()
-        ucolor_2d_shader.uniform_float("color", (0.0, 0.0, 0.0, 0.8))
+        ucolor_2d_shader.uniform_float("color", hover_effect_color)
         ucolor_2d_rect_batch.draw(ucolor_2d_shader)
 
     bgl.glDisable(bgl.GL_BLEND)
 
 
-def draw_overlay():
-    """Draw overlay effects on top of the thumbnails"""
+def draw_selected_frame(position, size):
+    """Draw a rectangular frame"""
 
-    draw_rectangle_2d((220, 220), (220, 220))
+    with gpu.matrix.push_pop():
+        gpu.matrix.translate(position)
+        gpu.matrix.scale(size)
+
+        ucolor_2d_shader.bind()
+        ucolor_2d_shader.uniform_float("color", selection_color)
+        ucolor_lines_rect_batch.draw(ucolor_2d_shader)
+
 
 
 def draw_thumbnails(thumbnail_images, size):
