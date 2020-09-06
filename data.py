@@ -54,6 +54,11 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     has_fx: BoolProperty(name="Has Effects")
     has_crowd: BoolProperty(name="Has Crowd")
 
+    @property
+    def duration_seconds(self):
+        fps = bpy.context.scene.render.fps
+        return self.duration/fps
+
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
@@ -69,7 +74,11 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         default=-1
     )
 
-    total_shot_duration = 0
+    @property
+    def total_frames(self):
+        """The total number of frames in the edit, according to the scene frame range."""
+        scene = bpy.context.scene
+        return scene.frame_end - scene.frame_start
 
 
 # Operators #######################################################################################
@@ -83,18 +92,18 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     def calculate_shots_duration(self, context):
         shots = context.scene.edit_breakdown.shots
 
-        total_duration_frames = 0
+        accumulated_total_frames = 0
         last_frame = max(context.scene.frame_end, shots[-1].frame_start)
         for shot in reversed(shots):
             shot.duration = last_frame - shot.frame_start
             last_frame = shot.frame_start
-            total_duration_frames += shot.duration
+            accumulated_total_frames += shot.duration
 
-        context.scene.edit_breakdown.total_shot_duration = total_duration_frames
-        # WIP
-        fps = 30
-        total_seconds = total_duration_frames/fps
-        log.info(f"Edit has {total_seconds:.1f} seconds, with a total of {total_duration_frames} frames")
+        scene = context.scene
+        scene_total_frames = scene.frame_end - scene.frame_start
+        if scene_total_frames != accumulated_total_frames:
+            self.report({'WARNING'},
+                "The frame range does not match the sequencer strips. Edit Breakdown will report incorrect duration")
 
     @classmethod
     def poll(cls, context):
@@ -156,12 +165,10 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         col = layout.column()
         col.label(text=f"Shots: {len(edit_breakdown.shots)}")
 
-        total_duration_frames = edit_breakdown.total_shot_duration
-        total_duration_frames = 14189
-        # WIP
-        fps = 30
-        total_seconds = total_duration_frames/fps
-        col.label(text=f"Frames: {total_duration_frames}")
+        total_frames = edit_breakdown.total_frames
+        fps = context.scene.render.fps
+        total_seconds = total_frames/fps
+        col.label(text=f"Frames: {total_frames}")
         col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
 
 
@@ -192,13 +199,13 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 
         col = layout.column()
         col.prop(selected_shot, "shot_name")
+
         sub = col.column()
         sub.enabled = False
-        sub.prop(selected_shot, "duration", text="Num Frames")
-        # WIP
-        fps = 30
-        total_seconds = selected_shot.duration/fps
-        col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
+        sub.prop(selected_shot, "duration", text="Frame Count")
+        total_seconds = selected_shot.duration_seconds
+        col.label(text=f"Duration: {total_seconds:.1f} seconds")
+
         col.prop(selected_shot, "animation_complexity")
         col.prop(selected_shot, "character_count")
         col.prop(selected_shot, "has_crowd")

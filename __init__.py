@@ -31,7 +31,7 @@ bl_info = {
 
 import logging
 
-if "bpy" in locals():
+if "data" in locals():
     import importlib
     importlib.reload(data)
     importlib.reload(draw_utils)
