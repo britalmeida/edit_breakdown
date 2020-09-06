@@ -97,6 +97,17 @@ def draw_selected_frame(position, size):
         ucolor_lines_rect_batch.draw(ucolor_2d_shader)
 
 
+def draw_boolean_tag(position, size, color):
+
+    with gpu.matrix.push_pop():
+        gpu.matrix.translate(position)
+        gpu.matrix.scale(size)
+
+        # Render a colored rectangle
+        ucolor_2d_shader.bind()
+        ucolor_2d_shader.uniform_float("color", color)
+        ucolor_2d_rect_batch.draw(ucolor_2d_shader)
+
 
 def draw_thumbnails(thumbnail_images, size):
 
@@ -115,7 +126,6 @@ def draw_thumbnails(thumbnail_images, size):
             image_2d_shader.bind()
             image_2d_shader.uniform_int("image", 0)
             image_2d_batch.draw(image_2d_shader)
-
 
 
 # Font ####################################################################

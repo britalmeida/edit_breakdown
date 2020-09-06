@@ -258,6 +258,20 @@ def draw_background():
 def draw_overlay():
     """Draw overlay effects on top of the thumbnails"""
 
+    active_tool = bpy.context.workspace.tools.from_space_image_mode('UV')
+    if active_tool and active_tool.idname == "edit_breakdown.tools.thumbnail_tag_tool":
+
+        tag = active_tool.operator_properties("sequencer.thumbnail_tag").tag
+        tag_color = (0.84, 0.0, 0.85, 0.9) if tag == 'has_fx' else (0.92, 0.81, 0.31, 0.9)
+
+        tag_size = (thumbnail_size[0], max(4, thumbnail_size[1] * 0.23))
+
+        shots = bpy.context.scene.edit_breakdown.shots
+        tag_default_value = shots[0].rna_type.properties[tag].default
+        for i, img in enumerate(thumbnail_images):
+            if shots[i].get(tag, tag_default_value):
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
+
     if hovered_thumbnail:
         draw_utils.draw_hover_highlight(hovered_thumbnail.pos, thumbnail_size)
 
