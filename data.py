@@ -18,6 +18,8 @@
 
 # <pep8 compliant>
 
+import csv
+import io
 import logging
 
 import bpy
@@ -80,6 +82,17 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     def duration_seconds(self):
         fps = bpy.context.scene.render.fps
         return self.duration/fps
+
+    @classmethod
+    def get_attributes(cls):
+        # TODO Figure out how to get attributes from the class
+        return ['shot_name', 'frame_start', 'duration', 'character_count', 'animation_complexity',
+                'has_fx', 'has_crowd']
+
+    def as_list(self):
+        # TODO Generate this list based on get_attributes(). Using getattr does not work.
+        return [self.shot_name, self.frame_start, self.duration, self.character_count,
+                self.animation_complexity, self.has_fx, self.has_crowd]
 
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
@@ -163,10 +176,10 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         return {'FINISHED'}
 
 
-class SEQUENCER_OT_export_edit_breakdown_to_csv(Operator):
-    bl_idname = "sequencer.export_edit_breakdown_to_csv"
-    bl_label = "Export Edit Breakdown to CSV"
-    bl_description = "Export Edit Breakdown data to a CSV file"
+class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
+    bl_idname = "sequencer.copy_edit_breakdown_as_csv"
+    bl_label = "Copy Edit Breakdown as CSV"
+    bl_description = "Copy Edit Breakdown data as CSV in the clipboard"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -176,12 +189,25 @@ class SEQUENCER_OT_export_edit_breakdown_to_csv(Operator):
     def execute(self, context):
         """Called to finish this operator's action."""
 
-        log.debug("export_edit_breakdown_to_csv: execute")
+        log.debug("copy_edit_breakdown_as_csv: execute")
 
         sequence_ed = context.scene.sequence_editor
         shots = context.scene.edit_breakdown.shots
+        log.info('Saving CSV to clipboard')
 
-        # Export goes here!
+        # Create shot list that becomes a CSV, starting with the header
+        shots_for_csv = [SEQUENCER_EditBreakdown_Shot.get_attributes()]
+        # Push each shot in the list
+        for shot in shots:
+            shots_for_csv.append(shot.as_list())
+
+        # Write the CSV in memory
+        outbuf = io.StringIO()
+        outcsv = csv.writer(outbuf)
+        outcsv.writerows(shots_for_csv)
+
+        # Push the CSV to the clipboard
+        bpy.context.window_manager.clipboard = outbuf.getvalue()
 
         return {'FINISHED'}
 
@@ -259,7 +285,7 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 def draw_sequencer_header_extension(self, context):
     layout = self.layout
     layout.operator("sequencer.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
-    layout.operator("sequencer.export_edit_breakdown_to_csv", icon='FILE')
+    layout.operator("sequencer.copy_edit_breakdown_as_csv", icon='FILE')
 
 
 
@@ -269,7 +295,7 @@ classes = (
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_OT_sync_edit_breakdown,
-    SEQUENCER_OT_export_edit_breakdown_to_csv,
+    SEQUENCER_OT_copy_edit_breakdown_as_csv,
     SEQUENCER_PT_edit_breakdown_overview,
     SEQUENCER_PT_edit_breakdown_shot,
 )
