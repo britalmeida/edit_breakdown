@@ -28,6 +28,7 @@ from bpy.types import (
 from bpy.props import (
     BoolProperty,
     EnumProperty,
+    IntProperty,
 )
 
 from . import view
@@ -122,6 +123,30 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         default="has_crowd",
     )
 
+    tag_value: IntProperty(
+        name="Tag Value",
+        description="Value to set the chosen property to",
+        default=1,
+        min=0,
+    )
+
+    def get_hovered_thumb(self, context):
+        """ Get the thumbnail under the mouse, if any."""
+
+        # Find the hovered thumbnail index in the edit breakdown shot data
+        hovered_thumbnail_idx =-1
+        for i, thumb in enumerate(view.thumbnail_images):
+            if thumb == view.hovered_thumbnail:
+                hovered_thumbnail_idx = i
+                break
+
+        if hovered_thumbnail_idx < 0:
+            return None
+
+        shots = context.scene.edit_breakdown.shots
+        return shots[hovered_thumbnail_idx]
+
+
     @classmethod
     def poll(cls, context):
         return True
@@ -134,7 +159,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             view.hovered_thumbnail = get_thumbnail_under_mouse(event.mouse_region_x,
                                                                event.mouse_region_y)
         else:
-            # Select.
+            # Set a shot property to a predetermined or input value.
 
             # Early out when clicking outside the thumbnail draw area.
             # This can happen when clicking on transparent panels that overlap the window area.
@@ -146,6 +171,20 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 mouse_y > view.thumbnail_draw_region[3]):
                 return {'FINISHED'}
 
+            # Get the thumbnail under the mouse, if any.
+            hovered_shot = self.get_hovered_thumb(context)
+            if not hovered_shot:
+                return {'FINISHED'}
+
+            # Determine the new value to set the property to.
+            if event.type == 'LEFTMOUSE':
+                log.debug("toggle")
+                # Toggle the tag
+                default_value = hovered_shot.rna_type.properties[self.tag].default
+                prev_value = hovered_shot.get(self.tag, default_value)
+                self.tag_value = not prev_value
+
+            # Assign the new tag value
             self.execute(context)
 
         # Request a redraw so that the selection and mouse hover effects are updated.
@@ -155,32 +194,13 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
 
     def execute(self, context):
-        """Tag the thumbnail under the mouse with the pre-configured property."""
+        """Set the tag to a certain value for the hovered shot."""
 
-        log.debug("thumbnail_tag: execute")
-
-        # Find the hovered thumbnail index in the edit breakdown shot data
-        hovered_thumbnail_idx =-1
-        for i, thumb in enumerate(view.thumbnail_images):
-            if thumb == view.hovered_thumbnail:
-                hovered_thumbnail_idx = i
-                break
-
-        if hovered_thumbnail_idx < 0:
-            return {'FINISHED'}
-
-        shots = context.scene.edit_breakdown.shots
-        hovered_shot = shots[hovered_thumbnail_idx]
-
-        log.info(f"Setting '{self.tag}' for thumbnail {hovered_thumbnail_idx}")
-
-        # Toggle the tag
-        default_value = hovered_shot.rna_type.properties[self.tag].default
-        prev_value = hovered_shot.get(self.tag, default_value)
-        hovered_shot[self.tag] = not prev_value
+        log.debug(f"Setting '{self.tag}'' to {self.tag_value}")
+        hovered_shot = self.get_hovered_thumb(context)
+        hovered_shot[self.tag] = self.tag_value
 
         return {'FINISHED'}
-
 
 
 class ThumbnailSelectTool(WorkSpaceTool):
@@ -197,18 +217,18 @@ class ThumbnailSelectTool(WorkSpaceTool):
         (
             "sequencer.thumbnail_select",
             {"type": 'MOUSEMOVE', "value": 'ANY'},
-            {"properties": []}
+            None
         ),
         # Execute selection
         (
             "sequencer.thumbnail_select",
             {"type": 'LEFTMOUSE', "value": 'PRESS'},
-            {"properties": []}
+            None
         ),
         (
             "sequencer.thumbnail_select",
             {"type": 'RIGHTMOUSE', "value": 'PRESS'},
-            {"properties": []}
+            None
         ),
     )
 
@@ -227,19 +247,31 @@ class ThumbnailTagTool(WorkSpaceTool):
         (
             "sequencer.thumbnail_tag",
             {"type": 'MOUSEMOVE', "value": 'ANY'},
-            {"properties": []}
+            None
         ),
-        # Execute selection
+        # Tag with pre-selected value
         (
             "sequencer.thumbnail_tag",
             {"type": 'LEFTMOUSE', "value": 'PRESS'},
-            {"properties": []}
+            None
+        ),
+        # Tag with numeric value
+        (
+            "sequencer.thumbnail_tag",
+            {"type": 'NUMPAD_0', "value": 'PRESS'},
+            #{"tag_value": 0}
+            {"properties": [("tag_value", 0)]}
+        ),
+        (
+            "sequencer.thumbnail_tag",
+            {"type": 'NUMPAD_1', "value": 'PRESS'},
+            {"properties": [("tag_value", 1)]}
         ),
         # Selection
         (
             "sequencer.thumbnail_select",
             {"type": 'RIGHTMOUSE', "value": 'PRESS'},
-            {"properties": []}
+            None
         ),
     )
 
