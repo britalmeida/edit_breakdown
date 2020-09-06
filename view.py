@@ -50,6 +50,35 @@ thumbnail_size = (0, 0) # The size in px at which the thumbnails should be displ
 hovered_thumbnail = None
 active_selected_thumbnail = None
 
+thumbnail_draw_region = (0, 0, 0, 0) # Rectangle inside a Blender region where the thumbnails draw
+
+
+def calculate_thumbnail_draw_region():
+
+    # Get size of the region containing the thumbnails.
+    region = bpy.context.region
+    total_available_w = region.width
+    total_available_h = region.height
+
+    start_w = 0 # If the tools side panel is open, the thumbnails must be shifted to the right
+
+    # If the header and side panels render on top of the region, discount their size.
+    # The thumbnails should not be occluded by the UI, even if set to transparent.
+    system_prefs = bpy.context.preferences.system
+    if system_prefs.use_region_overlap:
+        area = bpy.context.area
+        for r in area.regions:
+            if r.type == 'HEADER' and r.height > 1:
+                total_available_h -= r.height
+            if r.type == 'UI' and r.width > 1:
+                total_available_w -= r.width
+            if r.type == 'TOOLS' and r.width > 1:
+                total_available_w -= r.width
+                start_w = r.width
+
+    global thumbnail_draw_region
+    thumbnail_draw_region = (start_w, 0, total_available_w, total_available_h)
+
 
 def load_edit_thumbnails():
     """Load all images from disk as resources to be rendered by the GPU"""
@@ -108,23 +137,9 @@ def fit_thumbnails_in_region():
     global thumbnail_size
 
     # Get size of the region containing the thumbnails.
-    region = bpy.context.region
-    total_available_w = region.width
-    total_available_h = region.height
-    start_w = 0 # If the tools side panel is open, the thumbnails must be shifted to the right
-    # If the header and side panels render on top of the region, discount their size.
-    # The thumbnails should not be occluded by the UI, even if set to transparent.
-    system_prefs = bpy.context.preferences.system
-    if system_prefs.use_region_overlap:
-        area = bpy.context.area
-        for r in area.regions:
-            if r.type == 'HEADER' and r.height > 1:
-                total_available_h -= r.height
-            if r.type == 'UI' and r.width > 1:
-                total_available_w -= r.width
-            if r.type == 'TOOLS' and r.width > 1:
-                total_available_w -= r.width
-                start_w = r.width
+    total_available_w = thumbnail_draw_region[2]
+    total_available_h = thumbnail_draw_region[3]
+    start_w = thumbnail_draw_region[0]
 
     log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
@@ -221,8 +236,11 @@ def draw_edit_thumbnails():
     if not thumbnail_images:
         load_edit_thumbnails()
 
-    # Position the images according to the available space.
-    fit_thumbnails_in_region()
+    # Recalculate the thumbnail positions when the available drawing space changes.
+    prev_draw_region = thumbnail_draw_region
+    calculate_thumbnail_draw_region()
+    if prev_draw_region != thumbnail_draw_region:
+        fit_thumbnails_in_region()
 
     # If the resulting layout makes the images too small, skip rendering.
     if thumbnail_size[0] <= 5 or thumbnail_size[1] <= 5:
