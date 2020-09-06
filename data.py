@@ -163,6 +163,28 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         return {'FINISHED'}
 
 
+class SEQUENCER_OT_export_edit_breakdown_to_csv(Operator):
+    bl_idname = "sequencer.export_edit_breakdown_to_csv"
+    bl_label = "Export Edit Breakdown to CSV"
+    bl_description = "Export Edit Breakdown data to a CSV file"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        log.debug("export_edit_breakdown_to_csv: execute")
+
+        sequence_ed = context.scene.sequence_editor
+        shots = context.scene.edit_breakdown.shots
+
+        # Export goes here!
+
+        return {'FINISHED'}
+
 
 # UI ##############################################################################################
 
@@ -237,6 +259,7 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 def draw_sequencer_header_extension(self, context):
     layout = self.layout
     layout.operator("sequencer.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
+    layout.operator("sequencer.export_edit_breakdown_to_csv", icon='FILE')
 
 
 
@@ -246,6 +269,7 @@ classes = (
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_OT_sync_edit_breakdown,
+    SEQUENCER_OT_export_edit_breakdown_to_csv,
     SEQUENCER_PT_edit_breakdown_overview,
     SEQUENCER_PT_edit_breakdown_shot,
 )
