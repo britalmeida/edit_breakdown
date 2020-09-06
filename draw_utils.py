@@ -99,6 +99,8 @@ def draw_selected_frame(position, size):
 
 def draw_boolean_tag(position, size, color):
 
+    bgl.glEnable(bgl.GL_BLEND)
+
     with gpu.matrix.push_pop():
         gpu.matrix.translate(position)
         gpu.matrix.scale(size)
@@ -107,6 +109,8 @@ def draw_boolean_tag(position, size, color):
         ucolor_2d_shader.bind()
         ucolor_2d_shader.uniform_float("color", color)
         ucolor_2d_rect_batch.draw(ucolor_2d_shader)
+
+    bgl.glDisable(bgl.GL_BLEND)
 
 
 def draw_thumbnails(thumbnail_images, size):

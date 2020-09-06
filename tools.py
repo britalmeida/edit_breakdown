@@ -119,8 +119,9 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         items=[
             ("has_fx", "Has FX", "If a shot requires VFX work"),
             ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
+            ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered")
         ],
-        default="has_crowd",
+        default="has_fx",
     )
 
     tag_value: IntProperty(
@@ -182,7 +183,13 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 # Toggle the tag
                 default_value = hovered_shot.rna_type.properties[self.tag].default
                 prev_value = hovered_shot.get(self.tag, default_value)
-                self.tag_value = not prev_value
+
+                if hovered_shot.rna_type.properties[self.tag].type == 'BOOLEAN':
+                    self.tag_value = not prev_value
+                else:
+                    self.tag_value = prev_value + 1
+                    if self.tag_value > hovered_shot.rna_type.properties[self.tag].hard_max:
+                        self.tag_value = hovered_shot.rna_type.properties[self.tag].hard_min
 
             # Assign the new tag value
             self.execute(context)
@@ -259,13 +266,22 @@ class ThumbnailTagTool(WorkSpaceTool):
         (
             "sequencer.thumbnail_tag",
             {"type": 'NUMPAD_0', "value": 'PRESS'},
-            #{"tag_value": 0}
             {"properties": [("tag_value", 0)]}
         ),
         (
             "sequencer.thumbnail_tag",
             {"type": 'NUMPAD_1', "value": 'PRESS'},
             {"properties": [("tag_value", 1)]}
+        ),
+        (
+            "sequencer.thumbnail_tag",
+            {"type": 'NUMPAD_2', "value": 'PRESS'},
+            {"properties": [("tag_value", 2)]}
+        ),
+        (
+            "sequencer.thumbnail_tag",
+            {"type": 'NUMPAD_3', "value": 'PRESS'},
+            {"properties": [("tag_value", 3)]}
         ),
         # Selection
         (
