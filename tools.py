@@ -41,8 +41,8 @@ def get_thumbnail_under_mouse(mouse_x, mouse_y) -> view.ThumbnailImage:
     """Return the ThumbnailImage currently under the mouse. Possibly None."""
 
     for thumb in view.thumbnail_images:
-        if mouse_x >= thumb.pos[0] and mouse_x <= thumb.pos[0] + view.thumbnail_size[0] and \
-           mouse_y >= thumb.pos[1] and mouse_y <= thumb.pos[1] + view.thumbnail_size[1]:
+        if (mouse_x >= thumb.pos[0] and mouse_x <= thumb.pos[0] + view.thumbnail_size[0] and
+            mouse_y >= thumb.pos[1] and mouse_y <= thumb.pos[1] + view.thumbnail_size[1]):
             return thumb
 
     return None
@@ -67,6 +67,17 @@ class SEQUENCER_OT_thumbnail_select(Operator):
                                                                event.mouse_region_y)
         else:
             # Select.
+
+            # Early out when clicking outside the thumbnail draw area.
+            # This can happen when clicking on transparent panels that overlap the window area.
+            mouse_x = event.mouse_region_x
+            mouse_y = event.mouse_region_y
+            if (mouse_x < view.thumbnail_draw_region[0] or
+                mouse_y < view.thumbnail_draw_region[1] or
+                mouse_x > view.thumbnail_draw_region[2] or
+                mouse_y > view.thumbnail_draw_region[3]):
+                return {'FINISHED'}
+
             self.execute(context)
 
         # Request a redraw so that the selection and mouse hover effects are updated.
