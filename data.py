@@ -241,10 +241,12 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         col.label(text=f"Shots: {len(edit_breakdown.shots)}")
 
         total_frames = edit_breakdown.total_frames
+        col.label(text=f"Frames: {total_frames}")
         fps = context.scene.render.fps
         total_seconds = total_frames/fps
-        col.label(text=f"Frames: {total_frames}")
-        col.label(text=f"Duration: {total_seconds/60:.1f} min ({total_seconds:.0f} seconds)")
+        total_minutes = total_seconds/60
+        left_over_seconds = total_seconds % 60
+        col.label(text=f"Duration: {int(total_minutes):02d}:{left_over_seconds:.0f}")
 
 
 class SEQUENCER_PT_edit_breakdown_shot(Panel):
