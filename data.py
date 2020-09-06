@@ -29,7 +29,6 @@ from bpy.types import (
 from bpy.props import (
     BoolProperty,
     CollectionProperty,
-    EnumProperty,
     IntProperty,
     PointerProperty,
     StringProperty,
@@ -45,14 +44,37 @@ log = logging.getLogger(__name__)
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
 
-    shot_name: StringProperty(name="Shot Name")
-    frame_start: IntProperty(name="Frame")
-    duration: IntProperty(name="Duration", description="Number of frames in this shot")
-    character_count: IntProperty(name="Character Count")
-    animation_complexity: EnumProperty(name="Anim Complexity",
-        items=[('1', '1', '1'), ('2', '2', '2'), ('3', '3', '3'), ('4', '4', '4'), ('5', '5', '5')])
-    has_fx: BoolProperty(name="Has Effects")
-    has_crowd: BoolProperty(name="Has Crowd")
+    shot_name: StringProperty(
+        name="Shot Name",
+        description="",
+    )
+    frame_start: IntProperty(
+        name="Frame",
+        description="",
+    )
+    duration: IntProperty(
+        name="Duration",
+        description="Number of frames in this shot"
+    )
+    character_count: IntProperty(
+        name="Character Count",
+        description="",
+        min=0,
+    )
+    animation_complexity: IntProperty(
+        name="Anim Complexity",
+        description="",
+        min=0,
+        max=3,
+    )
+    has_fx: BoolProperty(
+        name="Has Effects",
+        description="",
+    )
+    has_crowd: BoolProperty(
+        name="Has Crowd",
+        description="",
+    )
 
     @property
     def duration_seconds(self):
