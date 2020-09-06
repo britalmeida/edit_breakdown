@@ -56,26 +56,31 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     )
     duration: IntProperty(
         name="Duration",
-        description="Number of frames in this shot"
+        description="Number of frames in this shot",
+        default=0,
     )
     character_count: IntProperty(
         name="Character Count",
         description="",
+        default=0,
         min=0,
     )
     animation_complexity: IntProperty(
         name="Anim Complexity",
         description="",
+        default=0,
         min=0,
         max=3,
     )
     has_fx: BoolProperty(
         name="Has Effects",
         description="",
+        default=False,
     )
     has_crowd: BoolProperty(
         name="Has Crowd",
         description="",
+        default=False,
     )
 
     @property
