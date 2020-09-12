@@ -18,14 +18,18 @@
 
 # <pep8 compliant>
 
+import contextlib
 import csv
 import io
 import logging
+import pathlib
 
 import bpy
 from bpy.types import Operator
 
 from . import view
+
+__name__ = "edit_breakdown" # WIP, add-on preferences will be removed
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +41,50 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_label = "Sync Edit Breakdown"
     bl_description = "Ensure the edit breakdown is up-to-date with the edit"
     bl_options = {'REGISTER'}
+
+    @contextlib.contextmanager
+    def override_render_settings(self, context, thumbnail_width=256):
+        """Overrides the render settings for thumbnail size in a 'with' block scope."""
+
+        rd = context.scene.render
+
+        # Remember current render settings in order to restore them later.
+        orig_res_x = rd.resolution_x
+        orig_res_y = rd.resolution_y
+        orig_percentage = rd.resolution_percentage
+        orig_file_format = rd.image_settings.file_format
+        orig_quality = rd.image_settings.quality
+
+        try:
+            # Update the render settings to something thumbnaily.
+            factor = orig_res_y / orig_res_x
+            rd.resolution_x = thumbnail_width
+            rd.resolution_y = round(thumbnail_width * factor)
+            rd.resolution_percentage = 100
+            rd.image_settings.file_format = 'JPEG'
+            rd.image_settings.quality = 80
+            yield
+        finally:
+            # Return the render settings to normal.
+            rd.resolution_x = orig_res_x
+            rd.resolution_y = orig_res_y
+            rd.resolution_percentage = orig_percentage
+            rd.image_settings.file_format = orig_file_format
+            rd.image_settings.quality = orig_quality
+
+    def save_render(self, datablock, file_name):
+        """Save the current render image to disk"""
+
+        addon_prefs = bpy.context.preferences.addons[__name__].preferences
+        folder_name = addon_prefs.edit_shots_folder
+
+        # Ensure folder exists
+        folder_path = pathlib.Path(folder_name)
+        folder_path.mkdir(parents=True, exist_ok=True)
+
+        path = folder_path.joinpath(file_name)
+        datablock.save_render(str(path))
+
 
     def calculate_shots_duration(self, context):
         shots = context.scene.edit_breakdown.shots
@@ -66,12 +114,23 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         log.debug("sync_edit_breakdown: execute")
 
-        sequence_ed = context.scene.sequence_editor
-        shots = context.scene.edit_breakdown.shots
+        scene = context.scene
+        sequence_ed = scene.sequence_editor
+        shots = scene.edit_breakdown.shots
 
         # Clear the previous breakdown data
         view.thumbnail_images.clear()
         shots.clear()
+
+        # Render a thumbnail to disk per each frame
+        markers = scene.timeline_markers
+        with self.override_render_settings(context):
+
+            for m in markers:
+                scene.frame_current = m.frame
+                bpy.ops.render.render()
+                file_name = f'{str(context.scene.frame_current)}.jpg'
+                self.save_render(bpy.data.images['Render Result'], file_name)
 
         # Load data from the sequence markers marked for use in the edit breakdown
         def WIP_fake_behaviour():
