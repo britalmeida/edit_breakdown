@@ -27,6 +27,7 @@ import pathlib
 import bpy
 from bpy.types import Operator
 
+from .data import SEQUENCER_EditBreakdown_Shot
 from . import view
 
 log = logging.getLogger(__name__)
