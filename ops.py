@@ -146,7 +146,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                         break
             if shot_data_to_delete:
                 self.report({'WARNING'},
-                    f"Orphan shots: {shot_data_to_delete}")
+                    f"Orphan shots (currently not deleted): {shot_data_to_delete}")
 
             for img in view.thumbnail_images:
 
