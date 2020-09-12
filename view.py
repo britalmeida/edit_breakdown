@@ -283,7 +283,7 @@ def draw_tool_active_tag():
         tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag
         tag_rna = shots[0].rna_type.properties[tag]
 
-        tag_size = (thumbnail_size[0], max(4, thumbnail_size[1] * 0.23))
+        tag_size = (thumbnail_size[0], max(4, int(thumbnail_size[1] * 0.23)))
 
         if tag != 'has_character':
             tag_default_value = tag_rna.default
