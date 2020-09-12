@@ -52,7 +52,7 @@ def get_thumbnail_under_mouse(mouse_x, mouse_y) -> view.ThumbnailImage:
 
 
 class SEQUENCER_OT_thumbnail_select(Operator):
-    bl_idname = "sequencer.thumbnail_select"
+    bl_idname = "edit_breakdown.thumbnail_select"
     bl_label = "Thumbnail Select"
     bl_description = "Selects edit breakdown thumbnails"
     bl_options = {'REGISTER'}
@@ -109,7 +109,7 @@ class SEQUENCER_OT_thumbnail_select(Operator):
 
 
 class SEQUENCER_OT_thumbnail_tag(Operator):
-    bl_idname = "sequencer.thumbnail_tag"
+    bl_idname = "edit_breakdown.thumbnail_tag"
     bl_label = "Thumbnail Tag"
     bl_description = "Sets properties of edit breakdown thumbnails"
     bl_options = {'REGISTER', 'UNDO'}
@@ -242,7 +242,7 @@ class ThumbnailSelectTool(WorkSpaceTool):
     bl_space_type = 'IMAGE_EDITOR'
     bl_context_mode = 'UV'
 
-    bl_idname = __name__+".thumbnail_select_tool"
+    bl_idname = "edit_breakdown.thumbnail_select_tool"
     bl_label = "Thumbnail Select"
     bl_description = "Select shot Thumbnails"
     bl_icon = "ops.generic.select_box"
@@ -250,18 +250,18 @@ class ThumbnailSelectTool(WorkSpaceTool):
     bl_keymap = (
         # Update mouse hover feedback
         (
-            "sequencer.thumbnail_select",
+            "edit_breakdown.thumbnail_select",
             {"type": 'MOUSEMOVE', "value": 'ANY'},
             None
         ),
         # Execute selection
         (
-            "sequencer.thumbnail_select",
+            "edit_breakdown.thumbnail_select",
             {"type": 'LEFTMOUSE', "value": 'PRESS'},
             None
         ),
         (
-            "sequencer.thumbnail_select",
+            "edit_breakdown.thumbnail_select",
             {"type": 'RIGHTMOUSE', "value": 'PRESS'},
             None
         ),
@@ -272,7 +272,7 @@ class ThumbnailTagTool(WorkSpaceTool):
     bl_space_type = 'IMAGE_EDITOR'
     bl_context_mode = 'UV'
 
-    bl_idname = __name__+".thumbnail_tag_tool"
+    bl_idname = "edit_breakdown.thumbnail_tag_tool"
     bl_label = "Thumbnail Tag"
     bl_description = "Tag shots with properties"
     bl_icon = "brush.paint_texture.clone"# Stamp-like icon.
@@ -280,47 +280,47 @@ class ThumbnailTagTool(WorkSpaceTool):
     bl_keymap = (
         # Update mouse hover feedback
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'MOUSEMOVE', "value": 'ANY'},
             None
         ),
         # Tag with pre-selected value
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'LEFTMOUSE', "value": 'PRESS'},
             None
         ),
         # Tag with numeric value
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_0', "value": 'PRESS'},
             {"properties": [("tag_value", 0)]}
         ),
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_1', "value": 'PRESS'},
             {"properties": [("tag_value", 1)]}
         ),
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_2', "value": 'PRESS'},
             {"properties": [("tag_value", 2)]}
         ),
         (
-            "sequencer.thumbnail_tag",
+            "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_3', "value": 'PRESS'},
             {"properties": [("tag_value", 3)]}
         ),
         # Selection
         (
-            "sequencer.thumbnail_select",
+            "edit_breakdown.thumbnail_select",
             {"type": 'RIGHTMOUSE', "value": 'PRESS'},
             None
         ),
     )
 
     def draw_settings(context, layout, tool):
-        props = tool.operator_properties("sequencer.thumbnail_tag")
+        props = tool.operator_properties("edit_breakdown.thumbnail_tag")
         layout.prop(props, "tag")
         if props.tag == 'has_character':
             layout.prop(props, "character", text="")

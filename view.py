@@ -29,8 +29,6 @@ from bpy_extras.image_utils import load_image
 
 from . import draw_utils
 
-__name__ = "edit_breakdown" # WIP, add-on preferences will be removed
-
 log = logging.getLogger(__name__)
 
 
@@ -83,7 +81,7 @@ def calculate_thumbnail_draw_region():
 def load_edit_thumbnails():
     """Load all images from disk as resources to be rendered by the GPU"""
 
-    addon_prefs = bpy.context.preferences.addons[__name__].preferences
+    addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
     folder_name = addon_prefs.edit_shots_folder
 
     try:
@@ -280,9 +278,9 @@ def draw_tool_active_tag():
         return
 
     active_tool = bpy.context.workspace.tools.from_space_image_mode('UV')
-    if active_tool and active_tool.idname == "edit_breakdown.tools.thumbnail_tag_tool":
+    if active_tool and active_tool.idname == "edit_breakdown.thumbnail_tag_tool":
 
-        tag = active_tool.operator_properties("sequencer.thumbnail_tag").tag
+        tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag
         tag_rna = shots[0].rna_type.properties[tag]
 
         tag_size = (thumbnail_size[0], max(4, thumbnail_size[1] * 0.23))
@@ -294,7 +292,7 @@ def draw_tool_active_tag():
                 draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
         else:
             tag_default_value = 0 #tag_rna.default_flag
-            active_character_tag = active_tool.operator_properties("sequencer.thumbnail_tag").character
+            active_character_tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").character
             for item in tag_rna.enum_items:
                 if item.identifier == active_character_tag:
                     active_character_tag = item.value
@@ -326,7 +324,7 @@ def draw_overlay():
 
 
 class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
-    bl_idname = __name__
+    bl_idname = "edit_breakdown"
 
     edit_shots_folder: StringProperty(
         name="Edit Shots",

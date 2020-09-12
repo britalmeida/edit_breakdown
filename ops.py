@@ -29,15 +29,13 @@ from bpy.types import Operator
 
 from . import view
 
-__name__ = "edit_breakdown" # WIP, add-on preferences will be removed
-
 log = logging.getLogger(__name__)
 
 
 # Operators #######################################################################################
 
 class SEQUENCER_OT_sync_edit_breakdown(Operator):
-    bl_idname = "sequencer.sync_edit_breakdown"
+    bl_idname = "edit_breakdown.sync_edit_breakdown"
     bl_label = "Sync Edit Breakdown"
     bl_description = "Ensure the edit breakdown is up-to-date with the edit"
     bl_options = {'REGISTER'}
@@ -75,7 +73,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     def save_render(self, datablock, file_name):
         """Save the current render image to disk"""
 
-        addon_prefs = bpy.context.preferences.addons[__name__].preferences
+        addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
         folder_name = addon_prefs.edit_shots_folder
 
         # Ensure folder exists
@@ -150,7 +148,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
 
 class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
-    bl_idname = "sequencer.copy_edit_breakdown_as_csv"
+    bl_idname = "edit_breakdown.copy_edit_breakdown_as_csv"
     bl_label = "Copy Edit Breakdown as CSV"
     bl_description = "Copy Edit Breakdown data as CSV in the clipboard"
     bl_options = {'REGISTER'}
@@ -190,8 +188,8 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
 
 def draw_sequencer_header_extension(self, context):
     layout = self.layout
-    layout.operator("sequencer.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
-    layout.operator("sequencer.copy_edit_breakdown_as_csv", icon='FILE')
+    layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
+    layout.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE')
 
 
 
