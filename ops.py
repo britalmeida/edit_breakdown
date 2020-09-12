@@ -111,14 +111,21 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         sequence_ed = scene.sequence_editor
         shots = scene.edit_breakdown.shots
 
-        # Clear the previous breakdown data
+        # Clear the previous runtime data.
         view.thumbnail_images.clear()
-        shots.clear()
+
+        # Ensure the thumbnails folder exists and clear old thumbnails.
+        addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
+        folder_name = addon_prefs.edit_shots_folder
+        folder_path = pathlib.Path(folder_name)
+        folder_path.mkdir(parents=True, exist_ok=True)
+        for path in folder_path.iterdir():
+            if path.suffix == ".jpg":
+                path.unlink()
 
         # Render a thumbnail to disk per each frame
         markers = scene.timeline_markers
         with self.override_render_settings(context):
-
             for m in markers:
                 scene.frame_current = m.frame
                 bpy.ops.render.render()
@@ -128,10 +135,30 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Load data from the sequence markers marked for use in the edit breakdown
         def WIP_fake_behaviour():
             view.load_edit_thumbnails()
+            # Delete shots that no longer match a marker
+            shot_data_to_delete = []
+            for i, shot in enumerate(shots):
+                for thumb in view.thumbnail_images:
+                    if shot.frame_start == int(thumb.name):
+                        break #  Found it, do nothing. Skip to next shot.
+                    elif shot.frame_start > int(thumb.name):
+                        shot_data_to_delete.append(i)
+                        break
+            if shot_data_to_delete:
+                self.report({'WARNING'},
+                    f"Orphan shots: {shot_data_to_delete}")
+
             for img in view.thumbnail_images:
-                new_shot = shots.add()
-                new_shot.shot_name = str(img.name)
-                new_shot.frame_start = img.name
+
+                # Try to find existing shot data
+                for i, shot in enumerate(shots):
+                    if shot.frame_start == int(thumb.name):
+                        break #  Found it, do nothing. Skip to next shot.
+                    elif shot.frame_start > int(thumb.name):
+                        new_shot = shots.add()
+                        new_shot.shot_name = str(img.name)
+                        new_shot.frame_start = img.name
+                        break
         WIP_fake_behaviour()
 
         self.calculate_shots_duration(context)
