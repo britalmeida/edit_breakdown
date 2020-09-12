@@ -262,6 +262,9 @@ tag_colors = {
     'has_crowd': [
         (0.92, 0.81, 0.31, 0.05),
         (0.92, 0.81, 0.31, 1.0)],
+    'has_character': [
+        (0.25, 0.75, 0.25, 0.05),
+        (0.25, 0.75, 0.25, 1.0)],
     'animation_complexity': [
         (0.4, 0.6, 0.75, 0.15),
         (0.4, 0.6, 0.75, 0.4),
@@ -269,21 +272,44 @@ tag_colors = {
         (0.4, 0.6, 0.75, 1.0),],
 }
 
-def draw_overlay():
-    """Draw overlay effects on top of the thumbnails"""
+def draw_tool_active_tag():
+    """Draw the value of the active tag on top of each thumbnail"""
+
+    shots = bpy.context.scene.edit_breakdown.shots
+    if not shots:
+        return
 
     active_tool = bpy.context.workspace.tools.from_space_image_mode('UV')
     if active_tool and active_tool.idname == "edit_breakdown.tools.thumbnail_tag_tool":
 
         tag = active_tool.operator_properties("sequencer.thumbnail_tag").tag
+        tag_rna = shots[0].rna_type.properties[tag]
 
         tag_size = (thumbnail_size[0], max(4, thumbnail_size[1] * 0.23))
 
-        shots = bpy.context.scene.edit_breakdown.shots
-        tag_default_value = shots[0].rna_type.properties[tag].default
-        for i, img in enumerate(thumbnail_images):
-            value = int(shots[i].get(tag, tag_default_value))
-            draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+        if tag != 'has_character':
+            tag_default_value = tag_rna.default
+            for i, img in enumerate(thumbnail_images):
+                value = int(shots[i].get(tag, tag_default_value))
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+        else:
+            tag_default_value = 0 #tag_rna.default_flag
+            active_character_tag = active_tool.operator_properties("sequencer.thumbnail_tag").character
+            for item in tag_rna.enum_items:
+                if item.identifier == active_character_tag:
+                    active_character_tag = item.value
+                    break
+
+            for i, img in enumerate(thumbnail_images):
+                value = shots[i].get(tag, tag_default_value)
+                value = int(value & active_character_tag != 0)
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+
+
+def draw_overlay():
+    """Draw overlay effects on top of the thumbnails"""
+
+    draw_tool_active_tag()
 
     if hovered_thumbnail:
         draw_utils.draw_hover_highlight(hovered_thumbnail.pos, thumbnail_size)

@@ -31,6 +31,7 @@ from bpy.types import (
 from bpy.props import (
     BoolProperty,
     CollectionProperty,
+    EnumProperty,
     IntProperty,
     PointerProperty,
     StringProperty,
@@ -42,6 +43,12 @@ log = logging.getLogger(__name__)
 
 
 # Data ############################################################################################
+
+characters = [
+    ("a", "Alice", ""),
+    ("b", "Bob", ""),
+]
+
 
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
@@ -58,12 +65,6 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         name="Duration",
         description="Number of frames in this shot",
         default=0,
-    )
-    character_count: IntProperty(
-        name="Character Count",
-        description="",
-        default=0,
-        min=0,
     )
     animation_complexity: IntProperty(
         name="Anim Complexity",
@@ -82,11 +83,31 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         description="",
         default=False,
     )
+    has_character: EnumProperty(
+        name="Characters",
+        description="Which characters are present in this shot",
+        items=characters,
+        options={'ENUM_FLAG'},
+    )
 
     @property
     def duration_seconds(self):
         fps = bpy.context.scene.render.fps
         return self.duration/fps
+
+    @property
+    def character_count(self):
+
+        count = 0
+        characters = self.has_character
+        rna = self.rna_type.properties['has_character']
+
+        for item in rna.enum_items:
+            if item.identifier in characters:
+                count += 1
+
+        return count
+
 
     @classmethod
     def get_attributes(cls):
@@ -284,9 +305,11 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         col.label(text=f"Duration: {total_seconds:.1f} seconds")
 
         col.prop(selected_shot, "animation_complexity")
-        col.prop(selected_shot, "character_count")
         col.prop(selected_shot, "has_crowd")
         col.prop(selected_shot, "has_fx")
+        col.prop(selected_shot, "has_character")
+        col.label(text=f"Character Count: {selected_shot.character_count}")
+
 
 
 def draw_sequencer_header_extension(self, context):

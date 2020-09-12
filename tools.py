@@ -32,6 +32,7 @@ from bpy.props import (
 )
 
 from . import view
+from . import data
 
 log = logging.getLogger(__name__)
 
@@ -119,9 +120,16 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         items=[
             ("has_fx", "Has FX", "If a shot requires VFX work"),
             ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
-            ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered")
+            ("has_character", "Characters", "The characters present in each shot"),
+            ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered"),
         ],
         default="has_fx",
+    )
+
+    character: EnumProperty(
+        name="Characters",
+        description="All the characters in the movie",
+        items=data.characters,
     )
 
     tag_value: IntProperty(
@@ -177,19 +185,32 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             if not hovered_shot:
                 return {'FINISHED'}
 
-            # Determine the new value to set the property to.
+            # Toggle the tag - Determine the new value to set the property to.
             if event.type == 'LEFTMOUSE':
-                log.debug("toggle")
-                # Toggle the tag
-                default_value = hovered_shot.rna_type.properties[self.tag].default
-                prev_value = hovered_shot.get(self.tag, default_value)
 
-                if hovered_shot.rna_type.properties[self.tag].type == 'BOOLEAN':
-                    self.tag_value = not prev_value
+                # Get the current value of the property
+                tag_rna = hovered_shot.rna_type.properties[self.tag]
+                is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
+                if is_enum_flag:
+                    #default_value = tag_rna.default_flag
+                    #prev_value = hovered_shot.get(self.tag, default_value)
+                    # Convert the bitflag value to a set of strings
+                    prev_value = hovered_shot.has_character
                 else:
+                    default_value = tag_rna.default
+                    prev_value = hovered_shot.get(self.tag, default_value)
+
+                if tag_rna.type == 'BOOLEAN':
+                    # Toggle
+                    self.tag_value = not prev_value
+                elif tag_rna.type == 'INT':
+                    # Cyclic increment
                     self.tag_value = prev_value + 1
-                    if self.tag_value > hovered_shot.rna_type.properties[self.tag].hard_max:
-                        self.tag_value = hovered_shot.rna_type.properties[self.tag].hard_min
+                    if self.tag_value > tag_rna.hard_max:
+                        self.tag_value = tag_rna.hard_min
+                elif is_enum_flag:
+                    # Toggle flag
+                    self.tag_value = self.character not in prev_value
 
             # Assign the new tag value
             self.execute(context)
@@ -203,9 +224,16 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     def execute(self, context):
         """Set the tag to a certain value for the hovered shot."""
 
-        log.debug(f"Setting '{self.tag}'' to {self.tag_value}")
         hovered_shot = self.get_hovered_thumb(context)
-        hovered_shot[self.tag] = self.tag_value
+
+        if hovered_shot.rna_type.properties[self.tag].type == 'ENUM':
+            log.debug(f"Setting '{self.tag}':'{self.character}' to {self.tag_value}")
+            character_set = hovered_shot.has_character
+            character_set.add(self.character) if self.tag_value else character_set.remove(self.character)
+            hovered_shot.has_character = character_set
+        else:
+            log.debug(f"Setting '{self.tag}' to {self.tag_value}")
+            hovered_shot[self.tag] = self.tag_value
 
         return {'FINISHED'}
 
@@ -294,6 +322,8 @@ class ThumbnailTagTool(WorkSpaceTool):
     def draw_settings(context, layout, tool):
         props = tool.operator_properties("sequencer.thumbnail_tag")
         layout.prop(props, "tag")
+        if props.tag == 'has_character':
+            layout.prop(props, "character", text="")
 
 
 
