@@ -31,15 +31,17 @@ bl_info = {
 
 import logging
 
-if "data" in locals():
+if "draw_utils" in locals():
     import importlib
     importlib.reload(data)
     importlib.reload(draw_utils)
+    importlib.reload(ops)
     importlib.reload(tools)
     importlib.reload(view)
 else:
     from . import data
     from . import draw_utils
+    from . import ops
     from . import tools
     from . import view
 
@@ -50,6 +52,7 @@ def register():
     log.info("------Registering Add-on---------------------------")
 
     data.register()
+    ops.register()
     tools.register()
     view.register()
 
@@ -61,6 +64,7 @@ def unregister():
     log.info("------Unregistering Add-on-------------------------")
 
     data.unregister()
+    ops.unregister()
     tools.unregister()
     view.unregister()
 
