@@ -48,25 +48,19 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         rd = context.scene.render
 
         # Remember current render settings in order to restore them later.
-        orig_res_x = rd.resolution_x
-        orig_res_y = rd.resolution_y
         orig_percentage = rd.resolution_percentage
         orig_file_format = rd.image_settings.file_format
         orig_quality = rd.image_settings.quality
 
         try:
-            # Update the render settings to something thumbnaily.
-            factor = orig_res_y / orig_res_x
-            rd.resolution_x = thumbnail_width
-            rd.resolution_y = round(thumbnail_width * factor)
-            rd.resolution_percentage = 100
+            # Set the render settings to thumbnail size.
+            # Update resolution % instead of the actual resolution to scale text strips properly.
+            rd.resolution_percentage = round(thumbnail_width * 100 / rd.resolution_x)
             rd.image_settings.file_format = 'JPEG'
             rd.image_settings.quality = 80
             yield
         finally:
             # Return the render settings to normal.
-            rd.resolution_x = orig_res_x
-            rd.resolution_y = orig_res_y
             rd.resolution_percentage = orig_percentage
             rd.image_settings.file_format = orig_file_format
             rd.image_settings.quality = orig_quality
