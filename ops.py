@@ -85,9 +85,9 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         accumulated_total_frames = 0
         last_frame = max(context.scene.frame_end, shots[-1].frame_start)
         for shot in reversed(shots):
-            shot.duration = last_frame - shot.frame_start
+            shot.frame_count = last_frame - shot.frame_start
             last_frame = shot.frame_start
-            accumulated_total_frames += shot.duration
+            accumulated_total_frames += shot.frame_count
 
         scene = context.scene
         scene_total_frames = scene.frame_end - scene.frame_start
@@ -113,6 +113,9 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         # Clear the previous runtime data.
         view.thumbnail_images.clear()
+        view.thumbnail_size = (0, 0)
+        view.hovered_thumbnail = None
+        view.active_selected_thumbnail = None
 
         # Ensure the thumbnails folder exists and clear old thumbnails.
         addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
@@ -124,6 +127,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 path.unlink()
 
         # Render a thumbnail to disk per each frame
+        log.info("Creating thumbnails")
         markers = scene.timeline_markers
         with self.override_render_settings(context):
             for m in markers:
@@ -135,6 +139,8 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Load data from the sequence markers marked for use in the edit breakdown
         def WIP_fake_behaviour():
             view.load_edit_thumbnails()
+            log.debug(f"Thumbnails: {len(view.thumbnail_images)}")
+
             # Delete shots that no longer match a marker
             shot_data_to_delete = []
             for i, shot in enumerate(shots):
@@ -148,17 +154,23 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 self.report({'WARNING'},
                     f"Orphan shots (currently not deleted): {shot_data_to_delete}")
 
-            for img in view.thumbnail_images:
-
+            for thumb in view.thumbnail_images:
                 # Try to find existing shot data
+                found = False
                 for i, shot in enumerate(shots):
                     if shot.frame_start == int(thumb.name):
+                        found = True
                         break #  Found it, do nothing. Skip to next shot.
                     elif shot.frame_start > int(thumb.name):
-                        new_shot = shots.add()
-                        new_shot.shot_name = str(img.name)
-                        new_shot.frame_start = img.name
                         break
+
+                if not found:
+                    new_shot = shots.add()
+                    new_shot.shot_name = str(thumb.name)
+                    new_shot.frame_start = thumb.name
+
+            log.debug(f"Shots: {len(shots)}")
+
         WIP_fake_behaviour()
 
         self.calculate_shots_duration(context)
