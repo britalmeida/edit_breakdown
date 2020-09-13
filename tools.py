@@ -229,7 +229,10 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         if hovered_shot.rna_type.properties[self.tag].type == 'ENUM':
             log.debug(f"Setting '{self.tag}':'{self.character}' to {self.tag_value}")
             character_set = hovered_shot.has_character
-            character_set.add(self.character) if self.tag_value else character_set.remove(self.character)
+            if self.tag_value:
+                character_set.add(self.character)
+            elif self.character in character_set:
+                character_set.remove(self.character)
             hovered_shot.has_character = character_set
         else:
             log.debug(f"Setting '{self.tag}' to {self.tag_value}")
