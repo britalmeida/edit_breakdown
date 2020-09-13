@@ -18,6 +18,7 @@
 
 # <pep8 compliant>
 
+import datetime
 import logging
 
 import bpy
@@ -58,8 +59,8 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         name="Frame",
         description="",
     )
-    duration: IntProperty(
-        name="Duration",
+    frame_count: IntProperty(
+        name="Frame Count",
         description="Number of frames in this shot",
         default=0,
     )
@@ -89,17 +90,26 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     @property
     def duration_seconds(self):
+        """The duration of this shot, in seconds"""
         fps = bpy.context.scene.render.fps
-        return self.duration/fps
+        return round(self.frame_count/fps, 1)
+
+    @property
+    def timestamp(self):
+        """The time at which this shot starts in the edit"""
+        fps = bpy.context.scene.render.fps
+        start_frame = max(0, self.frame_start - bpy.context.scene.frame_start)
+        seconds_to_start = round(start_frame/fps)
+        return str(datetime.timedelta(seconds=seconds_to_start))
 
     @property
     def character_count(self):
-
+        """The total number of characters present on this shot"""
         count = 0
         characters = self.has_character
-        rna = self.rna_type.properties['has_character']
+        prop_rna = self.rna_type.properties['has_character']
 
-        for item in rna.enum_items:
+        for item in prop_rna.enum_items:
             if item.identifier in characters:
                 count += 1
 
@@ -109,13 +119,14 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_attributes(cls):
         # TODO Figure out how to get attributes from the class
-        return ['shot_name', 'frame_start', 'duration', 'character_count', 'animation_complexity',
-                'has_fx', 'has_crowd']
+        return ['shot_name', 'frame_start', 'timestamp', 'duration_seconds' ,'character_count',
+                'animation_complexity', 'has_fx', 'has_crowd']
 
     def as_list(self):
         # TODO Generate this list based on get_attributes(). Using getattr does not work.
-        return [self.shot_name, self.frame_start, self.duration, self.character_count,
-                self.animation_complexity, self.has_fx, self.has_crowd]
+        return [self.shot_name, self.frame_start, self.timestamp, self.duration_seconds,
+                self.character_count, self.animation_complexity,
+                int(self.has_fx), int(self.has_crowd)]
 
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
@@ -166,10 +177,9 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         total_frames = edit_breakdown.total_frames
         col.label(text=f"Frames: {total_frames}")
         fps = context.scene.render.fps
-        total_seconds = total_frames/fps
-        total_minutes = total_seconds/60
-        left_over_seconds = total_seconds % 60
-        col.label(text=f"Duration: {int(total_minutes):02d}:{left_over_seconds:.0f}")
+        total_seconds = round(total_frames/fps)
+        duration_str = str(datetime.timedelta(seconds=total_seconds))
+        col.label(text=f"Duration: {duration_str}")
 
 
 class SEQUENCER_PT_edit_breakdown_shot(Panel):
@@ -200,11 +210,10 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         col = layout.column()
         col.prop(selected_shot, "shot_name")
 
-        sub = col.column()
-        sub.enabled = False
-        sub.prop(selected_shot, "duration", text="Frame Count")
-        total_seconds = selected_shot.duration_seconds
-        col.label(text=f"Duration: {total_seconds:.1f} seconds")
+        col.label(text=f"Timestamp: {selected_shot.timestamp}")
+        total_seconds = round(selected_shot.duration_seconds)
+        m, s = divmod(total_seconds, 60)
+        col.label(text=f"Duration: {m:02d}:{s:02d}")
 
         col.prop(selected_shot, "animation_complexity")
         col.prop(selected_shot, "has_crowd")
