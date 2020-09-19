@@ -23,8 +23,6 @@ import math
 import os
 
 import bpy
-from bpy.types import AddonPreferences
-from bpy.props import StringProperty
 from bpy_extras.image_utils import load_image
 
 from . import draw_utils
@@ -320,40 +318,13 @@ def draw_overlay():
 
 
 
-# Settings ########################################################################################
-
-
-class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
-    bl_idname = "edit_breakdown"
-
-    edit_shots_folder: StringProperty(
-        name="Edit Shots",
-        description="Folder with image thumbnails for each shot",
-        default="",
-        subtype="FILE_PATH"
-    )
-
-    def draw(self, context):
-        layout = self.layout
-
-        col = layout.column()
-        col.prop(self, "edit_shots_folder")
-
-
-
 # Add-on Registration #############################################################################
-
-classes = (
-    SEQUENCER_EditBreakdown_Preferences,
-)
 
 draw_handles = []
 space = bpy.types.SpaceImageEditor # SpaceSequenceEditor
 
 
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
 
     draw_handles.append(space.draw_handler_add(draw_background, (), 'WINDOW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'WINDOW', 'POST_PIXEL'))
@@ -364,6 +335,3 @@ def unregister():
 
     for handle in draw_handles:
         space.draw_handler_remove(handle, 'WINDOW')
-
-    for cls in classes:
-        bpy.utils.unregister_class(cls)

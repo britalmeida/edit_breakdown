@@ -23,6 +23,7 @@ import logging
 
 import bpy
 from bpy.types import (
+    AddonPreferences,
     Panel,
     PropertyGroup,
 )
@@ -38,6 +39,27 @@ from bpy.props import (
 from . import view
 
 log = logging.getLogger(__name__)
+
+
+# Settings ########################################################################################
+
+
+class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
+    bl_idname = "edit_breakdown"
+
+    edit_shots_folder: StringProperty(
+        name="Edit Shots",
+        description="Folder with image thumbnails for each shot",
+        default="",
+        subtype="FILE_PATH"
+    )
+
+    def draw(self, context):
+        layout = self.layout
+
+        col = layout.column()
+        col.prop(self, "edit_shots_folder")
+
 
 
 # Data ############################################################################################
@@ -226,6 +248,7 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 # Add-on Registration #############################################################################
 
 classes = (
+    SEQUENCER_EditBreakdown_Preferences,
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_PT_edit_breakdown_overview,
