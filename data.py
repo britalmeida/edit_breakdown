@@ -54,11 +54,98 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         subtype="FILE_PATH"
     )
 
+    def get_custom_shot_properties(self):
+        """Get a list of the user defined properties for Shots"""
+
+        shot_class = SEQUENCER_EditBreakdown_Shot
+
+        custom_rna_properties = {prop for prop in shot_class.bl_rna.properties if (prop.is_runtime
+            and prop.identifier != "frame_start"
+            and prop.identifier != "frame_count")}
+        return custom_rna_properties
+
+
+    def get_ui_name_for_prop_type(self, prop):
+        """Get the name to display in the UI for a property type"""
+
+        if prop.type == 'BOOLEAN':
+            return "True/False"
+        elif prop.type == 'INT':
+            return "Number"
+        elif prop.type == 'STRING':
+            return "Text"
+        elif prop.type == 'ENUM':
+            return "Multiple Choice" if prop.is_enum_flag else "Single Choice"
+        return prop.type # Unsupported
+
+
     def draw(self, context):
         layout = self.layout
+        layout.use_property_split = False
 
         col = layout.column()
-        col.prop(self, "edit_shots_folder")
+        col.prop(self, "edit_shots_folder", text="Thumbnails Folder")
+
+        col_props = layout.column()
+        col_props.label(text="Shot Properties:")
+
+        props = self.get_custom_shot_properties()
+        for prop in props:
+
+            box = col_props.box()
+
+            row = box.row()
+
+            row.enabled = (prop.type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
+
+            split = row.split(factor=0.1)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.label(text="[color]")
+
+            row = split.row(align=True)
+            split = row.split(factor=0.2)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.label(text=self.get_ui_name_for_prop_type(prop))
+
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.label(text=prop.name)
+            row.label(text=prop.description)
+
+            if prop.type == 'INT':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                row = split.row(align=True)
+                row.label(text="Range:")
+                row.label(text="Min:")
+                row.label(text=str(prop.soft_min))
+                row.label(text="Max:")
+                row.label(text=str(prop.soft_max))
+
+            if prop.type == 'ENUM':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                row = split.row(align=True)
+                row.label(text="Items:")
+
+                col = row.column(align=True)
+                for char in characters:
+                    row = col.row(align=True)
+                    row.label(text=char[0])
+
+            col_props.separator()
+
+        row = col_props.row()
+        row.label(text="[Add Property]")
+
+        col_props = layout.column()
+        col_props.label(text="Sequence Properties:")
+        row = col_props.row()
+        row.label(text="[Add Property]")
 
 
 
