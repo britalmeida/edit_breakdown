@@ -114,6 +114,8 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             row.prop(prop, "name")
             row.prop(prop, "description")
 
+            row.operator("edit_breakdown.del_custom_shot_prop").prop_id=prop.identifier
+
             if prop.data_type == 'INT':
                 row = box.row()
                 split = row.split(factor=0.1)
@@ -404,6 +406,11 @@ def register_custom_prop(data_cls, prop):
         exec(f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}'{extra_prop_config})")
 
 
+def unregister_custom_prop(data_cls, prop_identifier):
+        # Note: 'exec': is used because prop.identifier is data driven. See note above.
+        exec(f"del data_cls.{prop_identifier}")
+
+
 @persistent
 def register_custom_properties(scene):
     """Register the custom shot and sequence data.
@@ -437,8 +444,7 @@ def unregister_custom_properties(scene):
     custom_props = bpy.context.scene.edit_breakdown.shot_custom_props
     log.debug(f"{len(custom_props)} custom props")
     for prop in custom_props:
-        # Note: 'exec': is used because prop.identifier is data driven. See note above.
-        exec(f"del shot_cls.{prop.identifier}")
+        unregister_custom_prop(shot_cls, prop.identifier)
 
     # Unregister custom sequence properties
     pass

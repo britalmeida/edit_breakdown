@@ -28,9 +28,10 @@ import os
 
 import bpy
 from bpy.types import Operator
+from bpy.props import StringProperty
 
 from .data import SEQUENCER_EditBreakdown_Shot
-from .data import register_custom_prop
+from .data import register_custom_prop, unregister_custom_prop
 from . import view
 
 log = logging.getLogger(__name__)
@@ -233,8 +234,6 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
     def execute(self, context):
         """Called to finish this operator's action."""
 
-        log.debug("add_custom_shot_prop: execute")
-
         scene = context.scene
         user_configured_props = scene.edit_breakdown.shot_custom_props
 
@@ -246,6 +245,51 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
         register_custom_prop(shot_cls, new_prop)
 
         return {'FINISHED'}
+
+
+class SEQUENCER_OT_del_custom_shot_prop(Operator):
+    bl_idname = "edit_breakdown.del_custom_shot_prop"
+    bl_label = "Delete Shot Property"
+    bl_description = "Remove custom property from the edit's shots and delete associated data"
+    bl_options = {'REGISTER'}
+
+    prop_id: StringProperty(
+        name="Prop Identifier",
+        description="Identifier of the custom property to be deleted",
+        default="",
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+
+        # Find the index of the custom property to remove
+        try:
+            idx_to_remove = next((i for i, prop in enumerate(user_configured_props) \
+                                if prop.identifier == self.prop_id))
+        except StopIteration:
+            log.error("Tried to remove a custom shot property that does not exist")
+            return {'CANCELLED'}
+
+        # Delete the property from all shots
+        shots = scene.edit_breakdown.shots
+        # TODO
+
+        # Delete the user configuration for the property
+        user_configured_props.remove(idx_to_remove)
+
+        # Delete the property definition
+        shot_cls = SEQUENCER_EditBreakdown_Shot
+        unregister_custom_prop(shot_cls, self.prop_id)
+
+        return {'FINISHED'}
+
 
 
 # UI ##############################################################################################
@@ -263,6 +307,7 @@ classes = (
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
     SEQUENCER_OT_add_custom_shot_prop,
+    SEQUENCER_OT_del_custom_shot_prop,
 )
 
 
