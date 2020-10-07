@@ -22,6 +22,7 @@ import datetime
 import logging
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.types import (
     AddonPreferences,
     Panel,
@@ -54,29 +55,19 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         subtype="FILE_PATH"
     )
 
-    def get_custom_shot_properties(self):
-        """Get a list of the user defined properties for Shots"""
 
-        shot_class = SEQUENCER_EditBreakdown_Shot
-
-        custom_rna_properties = {prop for prop in shot_class.bl_rna.properties if (prop.is_runtime
-            and prop.identifier != "frame_start"
-            and prop.identifier != "frame_count")}
-        return custom_rna_properties
-
-
-    def get_ui_name_for_prop_type(self, prop):
+    def get_ui_name_for_prop_type(self, prop_type):
         """Get the name to display in the UI for a property type"""
 
-        if prop.type == 'BOOLEAN':
+        if prop_type == 'BOOLEAN':
             return "True/False"
-        elif prop.type == 'INT':
+        elif prop_type == 'INT':
             return "Number"
-        elif prop.type == 'STRING':
+        elif prop_type == 'STRING':
             return "Text"
-        elif prop.type == 'ENUM':
-            return "Multiple Choice" if prop.is_enum_flag else "Single Choice"
-        return prop.type # Unsupported
+        elif prop_type == 'ENUM':
+            return "Multiple Choice" # if prop.is_enum_flag else "Single Choice"
+        return prop_type # Unsupported
 
 
     def draw(self, context):
@@ -89,14 +80,22 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         col_props = layout.column()
         col_props.label(text="Shot Properties:")
 
-        props = self.get_custom_shot_properties()
-        for prop in props:
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+        log.debug(f"File custom props are set? {scene.edit_breakdown.is_property_set('shot_custom_props')}")
+        log.debug(f"File has {len(user_configured_props)} configured properties.")
+
+        shot_cls = SEQUENCER_EditBreakdown_Shot
+        blend_file_data_props = shot_cls.get_custom_properties()
+        log.debug(f"File has {len(blend_file_data_props)} used properties.")
+
+        for prop in user_configured_props:
+
+            log.debug(prop.identifier)
 
             box = col_props.box()
-
             row = box.row()
-
-            row.enabled = (prop.type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
+            row.enabled = (prop.data_type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
 
             split = row.split(factor=0.1)
             row = split.row(align=True)
@@ -107,14 +106,15 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             split = row.split(factor=0.2)
             row = split.row(align=True)
             row.alignment = 'LEFT'
-            row.label(text=self.get_ui_name_for_prop_type(prop))
+            row.label(text=self.get_ui_name_for_prop_type(prop.data_type))
 
             row = split.row(align=True)
             row.alignment = 'LEFT'
-            row.label(text=prop.name)
-            row.label(text=prop.description)
 
-            if prop.type == 'INT':
+            row.prop(prop, "name")
+            row.prop(prop, "description")
+
+            if prop.data_type == 'INT':
                 row = box.row()
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
@@ -125,7 +125,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
                 row.label(text="Max:")
                 row.label(text=str(prop.soft_max))
 
-            if prop.type == 'ENUM':
+            if prop.data_type == 'ENUM':
                 row = box.row()
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
@@ -140,7 +140,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             col_props.separator()
 
         row = col_props.row()
-        row.label(text="[Add Property]")
+        row.operator("edit_breakdown.add_custom_shot_prop")
 
         col_props = layout.column()
         col_props.label(text="Sequence Properties:")
@@ -150,6 +150,36 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 
 # Data ############################################################################################
+
+
+class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
+    """Definition of a user defined property for a shot or sequence"""
+
+    identifier: StringProperty(
+        name="Identifier",
+        description="Unique name with which Blender can identify this property. " \
+            "Does not change if the property is renamed",
+    )
+    name: StringProperty(
+        name="Name",
+        description="Name to display in the UI. Can be renamed",
+        default="Name"
+    )
+    description: StringProperty(
+        name="Description",
+        description="Details on the meaning of the property",
+        default="Description"
+    )
+    data_type: StringProperty(
+        name="Type",
+        description="The type of data that this property holds",
+        default="BOOLEAN"
+    )
+    type_config: StringProperty(
+        name="Type Config",
+        description="Range and enum items",
+    )
+
 
 characters = [
     ("a", "Alice", ""),
@@ -170,7 +200,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     )
     frame_count: IntProperty(
         name="Frame Count",
-        description="Number of frames in this shot",
+        description="",
         default=0,
     )
     animation_complexity: IntProperty(
@@ -226,6 +256,19 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
 
     @classmethod
+    def get_hardcoded_properties(cls):
+        """Get a list of the properties that are managed by this add-on (not user defined)"""
+        return ['shot_name', 'frame_start', 'frame_count', 'animation_complexity',
+                'has_fx', 'has_crowd', 'has_character']
+
+    @classmethod
+    def get_custom_properties(cls):
+        """Get a list of the user defined properties for Shots"""
+        custom_rna_properties = {prop for prop in cls.bl_rna.properties if (prop.is_runtime
+            and prop.identifier not in cls.get_hardcoded_properties())}
+        return custom_rna_properties
+
+    @classmethod
     def get_attributes(cls):
         # TODO Figure out how to get attributes from the class
         return ['shot_name', 'frame_start', 'timestamp', 'duration_seconds' ,'character_count',
@@ -250,6 +293,12 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         name="Selected Shot",
         description="The active selected shot (last selected, if any).",
         default=-1
+    )
+
+    shot_custom_props: CollectionProperty(
+        type=SEQUENCER_EditBreakdown_CustomProp,
+        name="Shot Custom Properties",
+        description="Data that can be set per shot",
     )
 
     @property
@@ -332,10 +381,75 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 
 
 
+# Property Registration On File Load ##############################################################
+
+def register_custom_prop(data_cls, prop):
+    extra_prop_config = ""
+    if prop.data_type == 'BOOLEAN':
+        prop_ctor = "BoolProperty"
+    elif prop.data_type == 'INT':
+        prop_ctor = "IntProperty"
+        hard_min, hard_max = (0,3) #type_config
+        extra_prop_config = f"min={hard_min}, max={hard_max}"
+    elif prop.data_type == 'STRING':
+        prop_ctor = "StringProperty"
+    elif prop.data_type == 'ENUM':
+        prop_ctor = "EnumProperty"
+    if prop_ctor:
+        # Note: 'exec': is used because prop.identifier is data driven.
+        # I don't know of a way to create a new RNA property from a function that
+        # receives a string instead of assignment.
+        # prop.identifier is fully controlled by code, not user input, and therefore
+        # there should be no danger of code injection.
+        exec(f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}'{extra_prop_config})")
+
+
+@persistent
+def register_custom_properties(scene):
+    """Register the custom shot and sequence data.
+
+    The custom data is defined on a per-file basis (as opposed to user settings).
+    Whenever loading a file, this function ensures that the custom data defined
+    for that file is resolved to defined properties.
+    """
+
+    log.info("Registering custom properties for loaded file")
+
+    # Register custom shot properties
+    shot_cls = SEQUENCER_EditBreakdown_Shot
+    custom_props = bpy.context.scene.edit_breakdown.shot_custom_props
+    log.debug(f"{len(custom_props)} custom props")
+    for prop in custom_props:
+        register_custom_prop(shot_cls, prop)
+
+    # Register custom sequence properties
+    pass
+
+
+@persistent
+def unregister_custom_properties(scene):
+    """Unregister the custom shot and sequence data"""
+
+    log.info("Unregistering custom properties for loaded file")
+
+    # Unregister custom shot properties
+    shot_cls = SEQUENCER_EditBreakdown_Shot
+    custom_props = bpy.context.scene.edit_breakdown.shot_custom_props
+    log.debug(f"{len(custom_props)} custom props")
+    for prop in custom_props:
+        # Note: 'exec': is used because prop.identifier is data driven. See note above.
+        exec(f"del shot_cls.{prop.identifier}")
+
+    # Unregister custom sequence properties
+    pass
+
+
+
 # Add-on Registration #############################################################################
 
 classes = (
     SEQUENCER_EditBreakdown_Preferences,
+    SEQUENCER_EditBreakdown_CustomProp,
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_PT_edit_breakdown_overview,
@@ -360,11 +474,17 @@ def register():
         description="Shot data used by the Edit Breakdown add-on.",
     )
 
+    bpy.app.handlers.load_pre.append(unregister_custom_properties)
+    bpy.app.handlers.load_post.append(register_custom_properties)
+
 
 def unregister():
+
+    bpy.app.handlers.load_pre.remove(unregister_custom_properties)
+    bpy.app.handlers.load_post.remove(register_custom_properties)
 
     del bpy.types.TimelineMarker.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 
-    for cls in classes:
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -352,5 +352,5 @@ def unregister():
     bpy.utils.unregister_tool(ThumbnailSelectTool)
     bpy.utils.unregister_tool(ThumbnailTagTool)
 
-    for cls in classes:
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

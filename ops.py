@@ -18,16 +18,19 @@
 
 # <pep8 compliant>
 
+import binascii
 import contextlib
 import csv
 import io
 import logging
 import pathlib
+import os
 
 import bpy
 from bpy.types import Operator
 
 from .data import SEQUENCER_EditBreakdown_Shot
+from .data import register_custom_prop
 from . import view
 
 log = logging.getLogger(__name__)
@@ -217,6 +220,33 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
         return {'FINISHED'}
 
 
+class SEQUENCER_OT_add_custom_shot_prop(Operator):
+    bl_idname = "edit_breakdown.add_custom_shot_prop"
+    bl_label = "Add Shot Property"
+    bl_description = "Add a new custom property to the edit's shots"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        log.debug("add_custom_shot_prop: execute")
+
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+
+        new_prop = user_configured_props.add()
+        # Generate an unique identifier for the property that will never be changed.
+        new_prop.identifier = f"cp_{binascii.hexlify(os.urandom(4)).decode()}"
+
+        shot_cls = SEQUENCER_EditBreakdown_Shot
+        register_custom_prop(shot_cls, new_prop)
+
+        return {'FINISHED'}
+
 
 # UI ##############################################################################################
 
@@ -232,6 +262,7 @@ def draw_sequencer_header_extension(self, context):
 classes = (
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
+    SEQUENCER_OT_add_custom_shot_prop,
 )
 
 
@@ -247,5 +278,5 @@ def unregister():
 
     bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension)
 
-    for cls in classes:
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

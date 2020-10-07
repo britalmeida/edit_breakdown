@@ -333,5 +333,5 @@ def register():
 
 def unregister():
 
-    for handle in draw_handles:
+    for handle in reversed(draw_handles):
         space.draw_handler_remove(handle, 'WINDOW')
