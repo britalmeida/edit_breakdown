@@ -287,7 +287,11 @@ def draw_tool_active_tag():
             tag_default_value = tag_rna.default
             for i, img in enumerate(thumbnail_images):
                 value = int(shots[i].get(tag, tag_default_value))
-                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+                if tag in tag_colors:
+                    tag_color = tag_colors[tag][value]
+                else:
+                    tag_color = tag_colors['has_fx'][value] # Just pick any color while colors are still data driven
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
         else:
             tag_default_value = 0 #tag_rna.default_flag
             active_character_tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").character

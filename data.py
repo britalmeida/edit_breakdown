@@ -381,6 +381,12 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         col.prop(selected_shot, "has_character")
         col.label(text=f"Character Count: {selected_shot.character_count}")
 
+        # Show user-defined properties
+        shot_cls = SEQUENCER_EditBreakdown_Shot
+        blend_file_data_props = shot_cls.get_custom_properties()
+        for prop in blend_file_data_props:
+            col.prop(selected_shot, prop.identifier)
+
 
 
 # Property Registration On File Load ##############################################################

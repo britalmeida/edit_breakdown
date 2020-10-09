@@ -107,6 +107,25 @@ class SEQUENCER_OT_thumbnail_select(Operator):
         return {'FINISHED'}
 
 
+def populate_enum_items_for_shot_custom_properties(self, context):
+    """Generate a complete list of shot properties as an enum list"""
+
+    # Add hardcoded properties
+    enum_items = [
+        ("has_fx", "Has FX", "If a shot requires VFX work"),
+        ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
+        ("has_character", "Characters", "The characters present in each shot"),
+        ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered"),
+    ]
+
+    # Add user-defined properties
+    scene = bpy.context.scene
+    user_configured_props = scene.edit_breakdown.shot_custom_props
+    for prop in user_configured_props:
+        enum_items.append((prop.identifier, prop.name, prop.description))
+
+    return enum_items
+
 
 class SEQUENCER_OT_thumbnail_tag(Operator):
     bl_idname = "edit_breakdown.thumbnail_tag"
@@ -117,13 +136,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     tag: EnumProperty(
         name="Tag",
         description="Property to set on the shots",
-        items=[
-            ("has_fx", "Has FX", "If a shot requires VFX work"),
-            ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
-            ("has_character", "Characters", "The characters present in each shot"),
-            ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered"),
-        ],
-        default="has_fx",
+        items=populate_enum_items_for_shot_custom_properties,
     )
 
     character: EnumProperty(
