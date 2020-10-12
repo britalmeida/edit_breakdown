@@ -42,125 +42,6 @@ from . import view
 log = logging.getLogger(__name__)
 
 
-# Settings ########################################################################################
-
-
-class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
-    bl_idname = "edit_breakdown"
-
-    edit_shots_folder: StringProperty(
-        name="Edit Shots",
-        description="Folder with image thumbnails for each shot",
-        default="",
-        subtype="FILE_PATH"
-    )
-
-
-    def get_ui_name_for_prop_type(self, prop_type):
-        """Get the name to display in the UI for a property type"""
-
-        if prop_type == 'BOOLEAN':
-            return "True/False"
-        elif prop_type == 'INT':
-            return "Number"
-        elif prop_type == 'STRING':
-            return "Text"
-        elif prop_type == 'ENUM':
-            return "Multiple Choice" # if prop.is_enum_flag else "Single Choice"
-        return prop_type # Unsupported
-
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = False
-
-        col = layout.column()
-        col.prop(self, "edit_shots_folder", text="Thumbnails Folder")
-
-        col_props = layout.column()
-        col_props.label(text="Shot Properties:")
-
-        scene = context.scene
-        user_configured_props = scene.edit_breakdown.shot_custom_props
-        log.debug(f"File custom props are set? {scene.edit_breakdown.is_property_set('shot_custom_props')}")
-        log.debug(f"File has {len(user_configured_props)} configured properties.")
-
-        shot_cls = SEQUENCER_EditBreakdown_Shot
-        blend_file_data_props = shot_cls.get_custom_properties()
-        log.debug(f"File has {len(blend_file_data_props)} used properties.")
-
-        for prop in user_configured_props:
-
-            log.debug(prop.identifier)
-
-            box = col_props.box()
-            row = box.row()
-            row.enabled = (prop.data_type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
-
-            split = row.split(factor=0.1)
-            row = split.row(align=True)
-            row.alignment = 'LEFT'
-            row.label(text="[color]")
-
-            row = split.row(align=True)
-            split = row.split(factor=0.2)
-            row = split.row(align=True)
-            row.alignment = 'LEFT'
-            row.label(text=self.get_ui_name_for_prop_type(prop.data_type))
-
-            row = split.row(align=True)
-            split = row.split(factor=0.65)
-            row = split.row(align=True)
-            row.alignment = 'LEFT'
-
-            row.label(text=prop.name)
-            row.label(text=prop.description)
-
-            row = split.row(align=False)
-            edit_op = row.operator("edit_breakdown.edit_custom_shot_prop", text="Edit")
-            edit_op.prop_id=prop.identifier
-            edit_op.name=prop.name
-            edit_op.description=prop.description
-            edit_op.data_type=prop.data_type
-            edit_op.range_min=prop.range_min
-            edit_op.range_max=prop.range_max
-            row.operator("edit_breakdown.del_custom_shot_prop",
-                        text="Delete").prop_id=prop.identifier
-
-            if prop.data_type == 'INT':
-                row = box.row()
-                split = row.split(factor=0.1)
-                row = split.row(align=True)
-                row = split.row(align=True)
-                row.label(text="Range:")
-                row.label(text="Min:")
-                row.label(text=str(prop.range_min))
-                row.label(text="Max:")
-                row.label(text=str(prop.range_max))
-
-            if prop.data_type == 'ENUM':
-                row = box.row()
-                split = row.split(factor=0.1)
-                row = split.row(align=True)
-                row = split.row(align=True)
-                row.label(text="Items:")
-
-                col = row.column(align=True)
-                for char in characters:
-                    row = col.row(align=True)
-                    row.label(text=char[0])
-
-            col_props.separator()
-
-        row = col_props.row()
-        row.operator("edit_breakdown.add_custom_shot_prop")
-
-        col_props = layout.column()
-        col_props.label(text="Sequence Properties:")
-        row = col_props.row()
-        row.label(text="[Add Property]")
-
-
 
 # Data ############################################################################################
 
@@ -344,6 +225,126 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         """The total number of frames in the edit, according to the scene frame range."""
         scene = bpy.context.scene
         return scene.frame_end - scene.frame_start
+
+
+
+# Settings ########################################################################################
+
+
+class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
+    bl_idname = "edit_breakdown"
+
+    edit_shots_folder: StringProperty(
+        name="Edit Shots",
+        description="Folder with image thumbnails for each shot",
+        default="",
+        subtype="FILE_PATH"
+    )
+
+
+    def get_ui_name_for_prop_type(self, prop_type):
+        """Get the name to display in the UI for a property type"""
+
+        if prop_type == 'BOOLEAN':
+            return "True/False"
+        elif prop_type == 'INT':
+            return "Number"
+        elif prop_type == 'STRING':
+            return "Text"
+        elif prop_type == 'ENUM':
+            return "Multiple Choice" # if prop.is_enum_flag else "Single Choice"
+        return prop_type # Unsupported
+
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = False
+
+        col = layout.column()
+        col.prop(self, "edit_shots_folder", text="Thumbnails Folder")
+
+        col_props = layout.column()
+        col_props.label(text="Shot Properties:")
+
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+        log.debug(f"File custom props are set? {scene.edit_breakdown.is_property_set('shot_custom_props')}")
+        log.debug(f"File has {len(user_configured_props)} configured properties.")
+
+        shot_cls = SEQUENCER_EditBreakdown_Shot
+        blend_file_data_props = shot_cls.get_custom_properties()
+        log.debug(f"File has {len(blend_file_data_props)} used properties.")
+
+        for prop in user_configured_props:
+
+            log.debug(prop.identifier)
+
+            box = col_props.box()
+            row = box.row()
+            row.enabled = (prop.data_type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
+
+            split = row.split(factor=0.1)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.label(text="[color]")
+
+            row = split.row(align=True)
+            split = row.split(factor=0.2)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.label(text=self.get_ui_name_for_prop_type(prop.data_type))
+
+            row = split.row(align=True)
+            split = row.split(factor=0.65)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+
+            row.label(text=prop.name)
+            row.label(text=prop.description)
+
+            row = split.row(align=False)
+            edit_op = row.operator("edit_breakdown.edit_custom_shot_prop", text="Edit")
+            edit_op.prop_id=prop.identifier
+            edit_op.name=prop.name
+            edit_op.description=prop.description
+            edit_op.data_type=prop.data_type
+            edit_op.range_min=prop.range_min
+            edit_op.range_max=prop.range_max
+            row.operator("edit_breakdown.del_custom_shot_prop",
+                        text="Delete").prop_id=prop.identifier
+
+            if prop.data_type == 'INT':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                row = split.row(align=True)
+                row.label(text="Range:")
+                row.label(text="Min:")
+                row.label(text=str(prop.range_min))
+                row.label(text="Max:")
+                row.label(text=str(prop.range_max))
+
+            if prop.data_type == 'ENUM':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                row = split.row(align=True)
+                row.label(text="Items:")
+
+                col = row.column(align=True)
+                for char in characters:
+                    row = col.row(align=True)
+                    row.label(text=char[0])
+
+            col_props.separator()
+
+        row = col_props.row()
+        row.operator("edit_breakdown.add_custom_shot_prop")
+
+        col_props = layout.column()
+        col_props.label(text="Sequence Properties:")
+        row = col_props.row()
+        row.label(text="[Add Property]")
 
 
 
