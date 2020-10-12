@@ -109,12 +109,23 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             row.label(text=self.get_ui_name_for_prop_type(prop.data_type))
 
             row = split.row(align=True)
+            split = row.split(factor=0.65)
+            row = split.row(align=True)
             row.alignment = 'LEFT'
 
-            row.prop(prop, "name")
-            row.prop(prop, "description")
+            row.label(text=prop.name)
+            row.label(text=prop.description)
 
-            row.operator("edit_breakdown.del_custom_shot_prop").prop_id=prop.identifier
+            row = split.row(align=False)
+            edit_op = row.operator("edit_breakdown.edit_custom_shot_prop", text="Edit")
+            edit_op.prop_id=prop.identifier
+            edit_op.name=prop.name
+            edit_op.description=prop.description
+            edit_op.data_type=prop.data_type
+            edit_op.range_min=prop.range_min
+            edit_op.range_max=prop.range_max
+            row.operator("edit_breakdown.del_custom_shot_prop",
+                        text="Delete").prop_id=prop.identifier
 
             if prop.data_type == 'INT':
                 row = box.row()
@@ -123,9 +134,9 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
                 row = split.row(align=True)
                 row.label(text="Range:")
                 row.label(text="Min:")
-                row.label(text=str(prop.soft_min))
+                row.label(text=str(prop.range_min))
                 row.label(text="Max:")
-                row.label(text=str(prop.soft_max))
+                row.label(text=str(prop.range_max))
 
             if prop.data_type == 'ENUM':
                 row = box.row()
@@ -180,6 +191,16 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     type_config: StringProperty(
         name="Type Config",
         description="Range and enum items",
+    )
+    range_min: IntProperty(
+        name="Min",
+        description="The minimum value that the property can have",
+        default=0,
+    )
+    range_max: IntProperty(
+        name="Max",
+        description="The maximum value that the property can have",
+        default=5,
     )
 
 
@@ -256,6 +277,21 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
         return count
 
+
+    @classmethod
+    def has_prop(cls, prop_id: str) -> bool:
+        """True if this class has a registered property under the identifier 'prop_id'."""
+        properties = {prop.identifier for prop in cls.bl_rna.properties if prop.is_runtime}
+        return (prop_id in properties)
+
+    def set_prop(self, prop_id: str, value) -> bool:
+        """Set the value of a property."""
+        if self.__class__.has_prop(prop_id):
+            # Note: See note about 'exec' in register_custom_prop().
+            exec(f"self.{prop_id} = {value}")
+            return True
+        else:
+            return False
 
     @classmethod
     def get_hardcoded_properties(cls):
@@ -397,8 +433,7 @@ def register_custom_prop(data_cls, prop):
         prop_ctor = "BoolProperty"
     elif prop.data_type == 'INT':
         prop_ctor = "IntProperty"
-        hard_min, hard_max = (0,3) #type_config
-        extra_prop_config = f"min={hard_min}, max={hard_max}"
+        extra_prop_config = f"min={prop.range_min}, max={prop.range_max}"
     elif prop.data_type == 'STRING':
         prop_ctor = "StringProperty"
     elif prop.data_type == 'ENUM':
@@ -409,7 +444,7 @@ def register_custom_prop(data_cls, prop):
         # receives a string instead of assignment.
         # prop.identifier is fully controlled by code, not user input, and therefore
         # there should be no danger of code injection.
-        exec(f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}'{extra_prop_config})")
+        exec(f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}', {extra_prop_config})")
 
 
 def unregister_custom_prop(data_cls, prop_identifier):

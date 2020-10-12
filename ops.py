@@ -25,13 +25,17 @@ import io
 import logging
 import pathlib
 import os
+import sys
 
 import bpy
 from bpy.types import Operator
-from bpy.props import StringProperty
+from bpy.props import (
+    EnumProperty,
+    IntProperty,
+    StringProperty,
+)
 
-from .data import SEQUENCER_EditBreakdown_Shot
-from .data import register_custom_prop, unregister_custom_prop
+from . import data
 from . import view
 
 log = logging.getLogger(__name__)
@@ -205,7 +209,7 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
         log.info('Saving CSV to clipboard')
 
         # Create shot list that becomes a CSV, starting with the header
-        shots_for_csv = [SEQUENCER_EditBreakdown_Shot.get_attributes()]
+        shots_for_csv = [data.SEQUENCER_EditBreakdown_Shot.get_attributes()]
         # Push each shot in the list
         for shot in shots:
             shots_for_csv.append(shot.as_list())
@@ -225,7 +229,7 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
     bl_idname = "edit_breakdown.add_custom_shot_prop"
     bl_label = "Add Shot Property"
     bl_description = "Add a new custom property to the edit's shots"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -241,8 +245,8 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
         # Generate an unique identifier for the property that will never be changed.
         new_prop.identifier = f"cp_{binascii.hexlify(os.urandom(4)).decode()}"
 
-        shot_cls = SEQUENCER_EditBreakdown_Shot
-        register_custom_prop(shot_cls, new_prop)
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        data.register_custom_prop(shot_cls, new_prop)
 
         return {'FINISHED'}
 
@@ -251,7 +255,7 @@ class SEQUENCER_OT_del_custom_shot_prop(Operator):
     bl_idname = "edit_breakdown.del_custom_shot_prop"
     bl_label = "Delete Shot Property"
     bl_description = "Remove custom property from the edit's shots and delete associated data"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     prop_id: StringProperty(
         name="Prop Identifier",
@@ -285,8 +289,157 @@ class SEQUENCER_OT_del_custom_shot_prop(Operator):
         user_configured_props.remove(idx_to_remove)
 
         # Delete the property definition
-        shot_cls = SEQUENCER_EditBreakdown_Shot
-        unregister_custom_prop(shot_cls, self.prop_id)
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        data.unregister_custom_prop(shot_cls, self.prop_id)
+
+        return {'FINISHED'}
+
+
+class SEQUENCER_OT_edit_custom_shot_prop(Operator):
+    bl_idname = "edit_breakdown.edit_custom_shot_prop"
+    bl_label = "Edit Shot Property"
+    bl_description = "Configure a shot custom property"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    prop_id: StringProperty(
+        name="Prop Identifier",
+        description="Identifier of the custom property to be edited",
+        default="",
+    )
+
+    name: StringProperty(
+        name="Name",
+        description="Name to display in the UI. Can be renamed",
+    )
+    description: StringProperty(
+        name="Description",
+        description="Details on the meaning of the property",
+    )
+    data_type: EnumProperty(
+        name="Data Type",
+        description="The type of data that this property holds",
+        items=[
+            ("BOOLEAN", "True/False", "Property that is on or off. A Boolean"),
+            ("INT", "Number", "An integer value within a custom range"),
+            ("STRING", "Text", "Additional details accessible in the properties panel"),
+            ("ENUM", "Multiple Choice", "Any combination of a set of custom items (enum flag)"),
+            ("ENUM2", "Single Choice", "One of a set of custom items (enum value)"),
+        ],
+    )
+    range_min: IntProperty(
+        name="Min",
+        description="The minimum value that the property can have",
+    )
+    range_max: IntProperty(
+        name="Max",
+        description="The maximum value that the property can have",
+    )
+
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        """Custom UI for the operator's properties."""
+        layout = self.layout
+
+        # Always allow editing of "cosmetic" values
+        col = layout.column()
+        col.prop(self, "name")
+        col.prop(self, "description")
+
+        # If 'prop_id' is not registered for shots, early out of any
+        # potentially data changing operations.
+        if not data.SEQUENCER_EditBreakdown_Shot.has_prop(self.prop_id):
+            col.label(icon='ERROR',
+                      text="Shots don't have this property registered. Try reloading the file.")
+            return
+
+        def is_prop_already_used(shots, prop_id):
+            """Check if any shot already has data introduced by the user for the given property."""
+            is_used = False
+            for shot in shots:
+                if shot.is_property_set(prop_id):
+                    is_used = True
+                    break
+            return is_used
+
+        def get_prop_used_range(shots, prop_id):
+            """Get the minimum and maximum values actually in use for the given property."""
+            default_value = 0 # When property is not set
+            min_val = sys.maxsize
+            max_val = ~sys.maxsize
+            for shot in shots:
+                val = int(shot.get(prop_id, default_value))
+                min_val = min(min_val, val)
+                max_val = max(max_val, val)
+            return min_val, max_val
+
+        shots = context.scene.edit_breakdown.shots
+        is_used = is_prop_already_used(shots, self.prop_id)
+
+        col = layout.column()
+        col.enabled = not is_used
+        col.prop(self, "data_type")
+        if is_used:
+            col.label(text="Type can not be edited after the property is already in use")
+
+        col = layout.column()
+        if self.data_type == 'INT':
+            col.prop(self, "range_min")
+            col.prop(self, "range_max")
+            min_used_val, max_used_val = get_prop_used_range(shots, self.prop_id)
+            if is_used and (self.range_min > min_used_val or self.range_max < max_used_val):
+                col.label(icon='ERROR', # Actually the triangle warning icon
+                          text="There is existing data outside the new range. Values outside the range will be clamped.")
+
+
+    def invoke(self, context, event):
+        """On user interaction, show a popup with the properties that only executes on 'OK'."""
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=400)
+
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+
+        # Find the custom property to edit
+        try:
+            prop = next((p for p in user_configured_props if p.identifier == self.prop_id))
+        except StopIteration:
+            log.error("Tried to edit a custom shot property that does not exist")
+            return {'CANCELLED'}
+
+        # Apply changes to the user configuration for the property
+        prop.name = self.name
+        prop.description = self.description
+        prop.data_type = self.data_type
+        if self.data_type == 'INT':
+            prop.range_min = self.range_min
+            prop.range_max = self.range_max
+
+        # Re-register the property definition
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        data.unregister_custom_prop(shot_cls, self.prop_id)
+        data.register_custom_prop(shot_cls, prop)
+
+        # Conform the existing data in all shots
+        if data.SEQUENCER_EditBreakdown_Shot.has_prop(self.prop_id):
+            shots = scene.edit_breakdown.shots
+            if self.data_type == 'INT':
+                # Update the default value if the new minimum is bigger than 0.
+                default_value = max(0, self.range_min)
+                prop.default = default_value
+                # Clamp all values to the new range
+                log.debug(f"[{self.range_min}, {self.range_max}]")
+                for shot in shots:
+                    val = int(shot.get(self.prop_id, default_value))
+                    new_val = max(self.range_min, min(val, self.range_max))
+                    shot.set_prop(self.prop_id, new_val)
 
         return {'FINISHED'}
 
@@ -308,6 +461,7 @@ classes = (
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
+    SEQUENCER_OT_edit_custom_shot_prop,
 )
 
 
