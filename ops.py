@@ -318,13 +318,7 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
     data_type: EnumProperty(
         name="Data Type",
         description="The type of data that this property holds",
-        items=[
-            ("BOOLEAN", "True/False", "Property that is on or off. A Boolean"),
-            ("INT", "Number", "An integer value within a custom range"),
-            ("STRING", "Text", "Additional details accessible in the properties panel"),
-            ("ENUM", "Multiple Choice", "Any combination of a set of custom items (enum flag)"),
-            ("ENUM2", "Single Choice", "One of a set of custom items (enum value)"),
-        ],
+        items=data.custom_prop_data_types,
     )
     range_min: IntProperty(
         name="Min",

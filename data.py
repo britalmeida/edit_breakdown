@@ -45,6 +45,13 @@ log = logging.getLogger(__name__)
 
 # Data ############################################################################################
 
+custom_prop_data_types = [
+    ("BOOLEAN", "True/False", "Property that is on or off. A Boolean"),
+    ("INT", "Number", "An integer value within a custom range"),
+    ("STRING", "Text", "Additional details accessible in the properties panel"),
+    ("ENUM_FLAG", "Multiple Choice", "Any combination of a set of custom items (enum flag)"),
+    ("ENUM_VAL", "Single Choice", "One of a set of custom items (enum value)"),
+]
 
 class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     """Definition of a user defined property for a shot or sequence"""
@@ -241,21 +248,6 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         subtype="FILE_PATH"
     )
 
-
-    def get_ui_name_for_prop_type(self, prop_type):
-        """Get the name to display in the UI for a property type"""
-
-        if prop_type == 'BOOLEAN':
-            return "True/False"
-        elif prop_type == 'INT':
-            return "Number"
-        elif prop_type == 'STRING':
-            return "Text"
-        elif prop_type == 'ENUM':
-            return "Multiple Choice" # if prop.is_enum_flag else "Single Choice"
-        return prop_type # Unsupported
-
-
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = False
@@ -275,13 +267,19 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         blend_file_data_props = shot_cls.get_custom_properties()
         log.debug(f"File has {len(blend_file_data_props)} used properties.")
 
+
+        def get_ui_name_for_prop_type(prop_type):
+            """Get the name to display in the UI for a property type"""
+            return next((t[1] for t in custom_prop_data_types if t[0] == prop_type), "Unsupported")
+
+
         for prop in user_configured_props:
 
             log.debug(prop.identifier)
 
             box = col_props.box()
             row = box.row()
-            row.enabled = (prop.data_type in ['BOOLEAN', 'ENUM', 'INT', 'STRING'])
+            row.enabled = (prop.data_type in (t[0] for t in custom_prop_data_types))
 
             split = row.split(factor=0.1)
             row = split.row(align=True)
@@ -292,7 +290,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             split = row.split(factor=0.2)
             row = split.row(align=True)
             row.alignment = 'LEFT'
-            row.label(text=self.get_ui_name_for_prop_type(prop.data_type))
+            row.label(text=get_ui_name_for_prop_type(prop.data_type))
 
             row = split.row(align=True)
             split = row.split(factor=0.65)
@@ -324,7 +322,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
                 row.label(text="Max:")
                 row.label(text=str(prop.range_max))
 
-            if prop.data_type == 'ENUM':
+            if prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
                 row = box.row()
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
@@ -437,8 +435,11 @@ def register_custom_prop(data_cls, prop):
         extra_prop_config = f"min={prop.range_min}, max={prop.range_max}"
     elif prop.data_type == 'STRING':
         prop_ctor = "StringProperty"
-    elif prop.data_type == 'ENUM':
+    elif prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
         prop_ctor = "EnumProperty"
+        extra_prop_config = "items=[],"
+        if prop.data_type == 'ENUM_FLAG':
+            extra_prop_config += "options={'ENUM_FLAG'}"
     if prop_ctor:
         # Note: 'exec': is used because prop.identifier is data driven.
         # I don't know of a way to create a new RNA property from a function that
