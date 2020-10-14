@@ -328,6 +328,10 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         name="Max",
         description="The maximum value that the property can have",
     )
+    enum_items: StringProperty(
+        name="Items",
+        description="Possible values for the property. Comma separated list of options",
+    )
 
 
     @classmethod
@@ -380,19 +384,23 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
             col.label(text="Type can not be edited after the property is already in use")
 
         col = layout.column()
+        # Additional configuration according to the data type
         if self.data_type == 'INT':
-            col.prop(self, "range_min")
-            col.prop(self, "range_max")
+            row=col.row()
+            row.prop(self, "range_min")
+            row.prop(self, "range_max")
             min_used_val, max_used_val = get_prop_used_range(shots, self.prop_id)
             if is_used and (self.range_min > min_used_val or self.range_max < max_used_val):
                 col.label(icon='ERROR', # Actually the triangle warning icon
                           text="There is existing data outside the new range. Values outside the range will be clamped.")
+        elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
+            col.prop(self, "enum_items")
 
 
     def invoke(self, context, event):
         """On user interaction, show a popup with the properties that only executes on 'OK'."""
         wm = context.window_manager
-        return wm.invoke_props_dialog(self, width=400)
+        return wm.invoke_props_dialog(self, width=450)
 
 
     def execute(self, context):
@@ -415,6 +423,8 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         if self.data_type == 'INT':
             prop.range_min = self.range_min
             prop.range_max = self.range_max
+        elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
+            prop.enum_items = self.enum_items
 
         # Re-register the property definition
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
@@ -434,6 +444,8 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
                     val = int(shot.get(self.prop_id, default_value))
                     new_val = max(self.range_min, min(val, self.range_max))
                     shot.set_prop(self.prop_id, new_val)
+            elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
+                items = [i.strip() for i in self.enum_items.split(',')]
 
         return {'FINISHED'}
 

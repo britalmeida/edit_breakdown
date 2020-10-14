@@ -64,21 +64,17 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     name: StringProperty(
         name="Name",
         description="Name to display in the UI. Can be renamed",
-        default="Name"
+        default="New property"
     )
     description: StringProperty(
         name="Description",
         description="Details on the meaning of the property",
-        default="Description"
+        default="A description"
     )
     data_type: StringProperty(
         name="Type",
         description="The type of data that this property holds",
         default="BOOLEAN"
-    )
-    type_config: StringProperty(
-        name="Type Config",
-        description="Range and enum items",
     )
     range_min: IntProperty(
         name="Min",
@@ -89,6 +85,11 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
         name="Max",
         description="The maximum value that the property can have",
         default=5,
+    )
+    enum_items: StringProperty(
+        name="Items",
+        description="Possible values for the property. Comma separated list of options",
+        default="Option 1, Option 2"
     )
 
 
@@ -308,6 +309,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             edit_op.data_type=prop.data_type
             edit_op.range_min=prop.range_min
             edit_op.range_max=prop.range_max
+            edit_op.enum_items=prop.enum_items
             row.operator("edit_breakdown.del_custom_shot_prop",
                         text="Delete").prop_id=prop.identifier
 
@@ -316,23 +318,32 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
                 row = split.row(align=True)
+                split = row.split(factor=0.2)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
                 row.label(text="Range:")
-                row.label(text="Min:")
-                row.label(text=str(prop.range_min))
-                row.label(text="Max:")
-                row.label(text=str(prop.range_max))
 
-            if prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
+                row = split.row(align=True)
+                split = row.split(factor=0.65)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text=f"Min: {prop.range_min}  Max: {prop.range_max}")
+
+            elif prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
                 row = box.row()
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
                 row = split.row(align=True)
+                split = row.split(factor=0.2)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
                 row.label(text="Items:")
 
-                col = row.column(align=True)
-                for char in characters:
-                    row = col.row(align=True)
-                    row.label(text=char[0])
+                row = split.row(align=True)
+                split = row.split(factor=0.65)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text=str(prop.enum_items))
 
             col_props.separator()
 
@@ -437,16 +448,26 @@ def register_custom_prop(data_cls, prop):
         prop_ctor = "StringProperty"
     elif prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
         prop_ctor = "EnumProperty"
-        extra_prop_config = "items=[],"
+
+        # Construct the enum items
+        enum_items = []
+        items = [i.strip() for i in prop.enum_items.split(',')]
+        for i, item_human_name in enumerate(items):
+            item_code_name = str(i)
+            enum_items.append((item_code_name, item_human_name, ""))
+        extra_prop_config = f"items={enum_items},"
+
         if prop.data_type == 'ENUM_FLAG':
-            extra_prop_config += "options={'ENUM_FLAG'}"
+            extra_prop_config += " options={'ENUM_FLAG'},"
     if prop_ctor:
         # Note: 'exec': is used because prop.identifier is data driven.
         # I don't know of a way to create a new RNA property from a function that
         # receives a string instead of assignment.
         # prop.identifier is fully controlled by code, not user input, and therefore
         # there should be no danger of code injection.
-        exec(f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}', {extra_prop_config})")
+        registration_expr = f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}', {extra_prop_config})"
+        log.debug(f"Registering custom property = {registration_expr}")
+        exec(registration_expr)
 
 
 def unregister_custom_prop(data_cls, prop_identifier):
