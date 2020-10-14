@@ -257,17 +257,12 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         col.prop(self, "edit_shots_folder", text="Thumbnails Folder")
 
         col_props = layout.column()
-        col_props.label(text="Shot Properties:")
+        row = col_props.row()
+        row.label(text="Shot Properties:")
+        row.operator("edit_breakdown.shot_properties_tooltip", icon="QUESTION", text="")
 
         scene = context.scene
         user_configured_props = scene.edit_breakdown.shot_custom_props
-        log.debug(f"File custom props are set? {scene.edit_breakdown.is_property_set('shot_custom_props')}")
-        log.debug(f"File has {len(user_configured_props)} configured properties.")
-
-        shot_cls = SEQUENCER_EditBreakdown_Shot
-        blend_file_data_props = shot_cls.get_custom_properties()
-        log.debug(f"File has {len(blend_file_data_props)} used properties.")
-
 
         def get_ui_name_for_prop_type(prop_type):
             """Get the name to display in the UI for a property type"""
@@ -275,8 +270,6 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 
         for prop in user_configured_props:
-
-            log.debug(prop.identifier)
 
             box = col_props.box()
             row = box.row()

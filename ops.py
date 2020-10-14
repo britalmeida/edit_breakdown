@@ -43,6 +43,9 @@ log = logging.getLogger(__name__)
 
 # Operators #######################################################################################
 
+
+
+
 class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_idname = "edit_breakdown.sync_edit_breakdown"
     bl_label = "Sync Edit Breakdown"
@@ -450,6 +453,44 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         return {'FINISHED'}
 
 
+class UI_OT_shot_properties_tooltip(Operator):
+    bl_idname = "edit_breakdown.shot_properties_tooltip"
+    bl_label = "Custom Shot Properties"
+    bl_description = "Show information about the custom properties present on this file"
+    bl_options = {'INTERNAL', 'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def invoke(self, context, event):
+        """On user interaction, show a popup with information."""
+        wm = context.window_manager
+        return wm.invoke_popup(self, width=400)
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+    def draw(self, context):
+        """Custom UI for the operator's properties."""
+        layout = self.layout
+
+        col = layout.column()
+        col.label(text=self.bl_label)
+        col.separator()
+
+        scene = context.scene
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+        col.label(text=f"File has {len(user_configured_props)} user-configured properties.")
+
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        blend_file_data_props = shot_cls.get_custom_properties()
+        col.label(text=f"File has {len(blend_file_data_props)} registered properties.")
+
+        col.separator()
+        col.label(text="Note: Custom properties are saved per file (not a user preference)")
+
+
 
 # UI ##############################################################################################
 
@@ -468,6 +509,7 @@ classes = (
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
     SEQUENCER_OT_edit_custom_shot_prop,
+    UI_OT_shot_properties_tooltip,
 )
 
 
