@@ -95,7 +95,7 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     color: FloatVectorProperty(
         name="Color",
         description="Associated color to be used by the Tag tool",
-        subtype = "COLOR",
+        subtype = "COLOR_GAMMA",
         size = 4, min = 0.0, max = 1.0,
         default = (0.4, 0.6, 0.75, 1.0) # Some blue
     )

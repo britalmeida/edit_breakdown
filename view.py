@@ -268,30 +268,52 @@ tag_colors = {
         (0.4, 0.6, 0.75, 1.0),],
 }
 
+
 def draw_tool_active_tag():
     """Draw the value of the active tag on top of each thumbnail"""
 
-    shots = bpy.context.scene.edit_breakdown.shots
+    scene = bpy.context.scene
+    shots = scene.edit_breakdown.shots
     if not shots:
         return
+
+    def get_color_for_tag(prop_config, value):
+        """Get the color to display the value of a property for the tag tool"""
+
+        base_color = prop_config.color
+        alpha = base_color[3]
+
+        if prop_config.data_type == 'BOOLEAN':
+            alpha *= 0.05 if (value == 0) else 1.0
+
+        return (base_color[0], base_color[1], base_color[2], alpha)
 
     active_tool = bpy.context.workspace.tools.from_space_image_mode('UV')
     if active_tool and active_tool.idname == "edit_breakdown.thumbnail_tag_tool":
 
+        # Tags show as full-width stripes at the bottom of thumbnails
+        tag_size = (thumbnail_size[0], max(4, int(thumbnail_size[1] * 0.23)))
+
         tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag
         tag_rna = shots[0].rna_type.properties[tag]
 
-        tag_size = (thumbnail_size[0], max(4, int(thumbnail_size[1] * 0.23)))
+        user_configured_props = scene.edit_breakdown.shot_custom_props
+        prop_config = next((p for p in user_configured_props if p.identifier == tag), None)
 
-        if tag != 'has_character':
+        # Generic Hardcoded property
+        if tag != 'has_character' and not prop_config:
             tag_default_value = tag_rna.default
             for i, img in enumerate(thumbnail_images):
                 value = int(shots[i].get(tag, tag_default_value))
-                if tag in tag_colors:
-                    tag_color = tag_colors[tag][value]
-                else:
-                    tag_color = tag_colors['has_fx'][value] # Just pick any color while colors are still data driven
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+        # Custom property
+        elif prop_config:
+            tag_default_value = 0
+            for i, img in enumerate(thumbnail_images):
+                value = int(shots[i].get(tag, tag_default_value))
+                tag_color = get_color_for_tag(prop_config, value)
                 draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
+        # Hardcoded 'has_character' property
         else:
             tag_default_value = 0 #tag_rna.default_flag
             active_character_tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").character
