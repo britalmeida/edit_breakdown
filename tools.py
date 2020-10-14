@@ -122,7 +122,7 @@ def populate_enum_items_for_shot_custom_properties(self, context):
     scene = bpy.context.scene
     user_configured_props = scene.edit_breakdown.shot_custom_props
     for prop in user_configured_props:
-        if prop.data_type in ['BOOLEAN']:
+        if prop.data_type in ['BOOLEAN', 'INT']:
             enum_items.append((prop.identifier, prop.name, prop.description))
 
     return enum_items
@@ -327,6 +327,36 @@ class ThumbnailTagTool(WorkSpaceTool):
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_3', "value": 'PRESS'},
             {"properties": [("tag_value", 3)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_4', "value": 'PRESS'},
+            {"properties": [("tag_value", 4)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_5', "value": 'PRESS'},
+            {"properties": [("tag_value", 5)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_6', "value": 'PRESS'},
+            {"properties": [("tag_value", 6)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_7', "value": 'PRESS'},
+            {"properties": [("tag_value", 7)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_8', "value": 'PRESS'},
+            {"properties": [("tag_value", 8)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NUMPAD_9', "value": 'PRESS'},
+            {"properties": [("tag_value", 9)]}
         ),
         # Selection
         (

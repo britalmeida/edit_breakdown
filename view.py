@@ -285,6 +285,10 @@ def draw_tool_active_tag():
 
         if prop_config.data_type == 'BOOLEAN':
             alpha *= 0.05 if (value == 0) else 1.0
+        elif prop_config.data_type == 'INT':
+            val_span = prop_config.range_max - prop_config.range_min
+            alpha_span = 1.0 - 0.15
+            alpha *= 0.15 + (alpha_span / val_span) * (value - prop_config.range_min)
 
         return (base_color[0], base_color[1], base_color[2], alpha)
 
