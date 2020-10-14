@@ -122,7 +122,8 @@ def populate_enum_items_for_shot_custom_properties(self, context):
     scene = bpy.context.scene
     user_configured_props = scene.edit_breakdown.shot_custom_props
     for prop in user_configured_props:
-        enum_items.append((prop.identifier, prop.name, prop.description))
+        if prop.data_type in ['BOOLEAN']:
+            enum_items.append((prop.identifier, prop.name, prop.description))
 
     return enum_items
 
