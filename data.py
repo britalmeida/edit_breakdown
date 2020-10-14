@@ -32,6 +32,7 @@ from bpy.props import (
     BoolProperty,
     CollectionProperty,
     EnumProperty,
+    FloatVectorProperty,
     IntProperty,
     PointerProperty,
     StringProperty,
@@ -78,18 +79,25 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     )
     range_min: IntProperty(
         name="Min",
-        description="The minimum value that the property can have",
+        description="The minimum value that the property can have if it is a number",
         default=0,
     )
     range_max: IntProperty(
         name="Max",
-        description="The maximum value that the property can have",
+        description="The maximum value that the property can have if it is a number",
         default=5,
     )
     enum_items: StringProperty(
         name="Items",
-        description="Possible values for the property. Comma separated list of options",
+        description="Possible values for the property if it is an enum. Comma separated list of options",
         default="Option 1, Option 2"
+    )
+    color: FloatVectorProperty(
+        name="Color",
+        description="Associated color to be used by the Tag tool",
+        subtype = "COLOR",
+        size = 4, min = 0.0, max = 1.0,
+        default = (0.4, 0.6, 0.75, 1.0) # Some blue
     )
 
 
@@ -278,7 +286,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
             split = row.split(factor=0.1)
             row = split.row(align=True)
             row.alignment = 'LEFT'
-            row.label(text="[color]")
+            row.prop(prop, "color", text="")
 
             row = split.row(align=True)
             split = row.split(factor=0.2)
