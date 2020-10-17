@@ -22,6 +22,7 @@ import binascii
 import contextlib
 import csv
 import io
+import json
 import logging
 import pathlib
 import os
@@ -453,6 +454,45 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         return {'FINISHED'}
 
 
+class SEQUENCER_OT_copy_custom_shot_props(Operator):
+    bl_idname = "edit_breakdown.copy_custom_shot_props"
+    bl_label = "Copy Custom Properties Configuration"
+    bl_description = "Copy the configuration of custom properties for shots. Can be pasted in another file"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        # Write to memory
+        outbuf = io.StringIO()
+        json.dump(['test'], outbuf)
+
+        # Push to the clipboard
+        bpy.context.window_manager.clipboard = outbuf.getvalue()
+
+        return {'FINISHED'}
+
+
+class SEQUENCER_OT_paste_custom_shot_props(Operator):
+    bl_idname = "edit_breakdown.paste_custom_shot_props"
+    bl_label = "Paste Custom Properties Configuration"
+    bl_description = "Paste the configuration of custom properties for shots"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        return {'FINISHED'}
+
+
 class UI_OT_shot_properties_tooltip(Operator):
     bl_idname = "edit_breakdown.shot_properties_tooltip"
     bl_label = "Custom Shot Properties"
@@ -509,6 +549,8 @@ classes = (
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
     SEQUENCER_OT_edit_custom_shot_prop,
+    SEQUENCER_OT_copy_custom_shot_props,
+    SEQUENCER_OT_paste_custom_shot_props,
     UI_OT_shot_properties_tooltip,
 )
 

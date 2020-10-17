@@ -253,7 +253,11 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         col_props = layout.column()
         row = col_props.row()
         row.label(text="Shot Properties:")
-        row.operator("edit_breakdown.shot_properties_tooltip", icon="QUESTION", text="")
+        sub = row.row(align=True)
+        sub.enabled = False
+        sub.operator("edit_breakdown.copy_custom_shot_props", icon='COPYDOWN', text="")
+        sub.operator("edit_breakdown.paste_custom_shot_props", icon='PASTEDOWN', text="")
+        row.operator("edit_breakdown.shot_properties_tooltip", icon='QUESTION', text="")
 
         scene = context.scene
         user_configured_props = scene.edit_breakdown.shot_custom_props
