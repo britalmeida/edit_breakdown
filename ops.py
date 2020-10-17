@@ -186,7 +186,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Sort shots per frame number. (Insertion Sort)
         for i in range(1, len(shots)):# Start at 1, because 0 is trivially sorted.
             value_being_sorted = shots[i].frame_start
-            # Shuffle 'value_being_sorted' from right-to-left on the sorted part 
+            # Shuffle 'value_being_sorted' from right-to-left on the sorted part
             # of the array, until it reaches its place
             insert_pos = i - 1
             while insert_pos >= 0 and shots[insert_pos].frame_start > value_being_sorted:
