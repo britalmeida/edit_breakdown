@@ -176,7 +176,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
             if match:
                 # Update data.
-                lod.debug(f"Update shot info {i} - {shot.name}")
+                log.debug(f"Update shot info {i} - {shot.name}")
                 shot.frame_start = m.frame
                 i -= 1
             else:
