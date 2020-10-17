@@ -121,23 +121,6 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         name="Timeline Marker UUID",
         description="Unequivocally links this shot with a timeline marker",
     )
-    animation_complexity: IntProperty(
-        name="Anim Complexity",
-        description="",
-        default=0,
-        min=0,
-        max=3,
-    )
-    has_fx: BoolProperty(
-        name="Has Effects",
-        description="",
-        default=False,
-    )
-    has_crowd: BoolProperty(
-        name="Has Crowd",
-        description="",
-        default=False,
-    )
 
     @property
     def duration_seconds(self):
@@ -183,8 +166,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['name', 'frame_start', 'frame_count', 'timeline_marker', 'animation_complexity',
-                'has_fx', 'has_crowd']
+        return ['name', 'frame_start', 'frame_count', 'timeline_marker']
 
     @classmethod
     def get_custom_properties(cls):
@@ -196,14 +178,11 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_attributes(cls):
         # TODO Figure out how to get attributes from the class
-        return ['name', 'frame_start', 'timestamp', 'duration_seconds',
-                'animation_complexity', 'has_fx', 'has_crowd']
+        return ['name', 'frame_start', 'timestamp', 'duration_seconds']
 
     def as_list(self):
         # TODO Generate this list based on get_attributes(). Using getattr does not work.
-        return [self.name, self.frame_start, self.timestamp, self.duration_seconds,
-                self.animation_complexity,
-                int(self.has_fx), int(self.has_crowd)]
+        return [self.name, self.frame_start, self.timestamp, self.duration_seconds]
 
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
@@ -415,10 +394,6 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         total_seconds = round(selected_shot.duration_seconds)
         m, s = divmod(total_seconds, 60)
         col.label(text=f"Duration: {m:02d}:{s:02d}")
-
-        col.prop(selected_shot, "animation_complexity")
-        col.prop(selected_shot, "has_crowd")
-        col.prop(selected_shot, "has_fx")
 
         # Show user-defined properties
         shot_cls = SEQUENCER_EditBreakdown_Shot
