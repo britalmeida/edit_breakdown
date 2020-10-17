@@ -337,12 +337,12 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 class SEQUENCER_PT_edit_breakdown_overview(Panel):
     bl_label = "Overview"
     bl_category = "Edit Breakdown"
-    bl_space_type = 'IMAGE_EDITOR'
+    bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
 
     @classmethod
     def poll(cls, context):
-        return context.space_data.type == 'IMAGE_EDITOR'
+        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
 
     def draw(self, context):
         layout = self.layout
@@ -365,12 +365,12 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
 class SEQUENCER_PT_edit_breakdown_shot(Panel):
     bl_label = "Shot"
     bl_category = "Edit Breakdown"
-    bl_space_type = 'IMAGE_EDITOR'
+    bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
 
     @classmethod
     def poll(cls, context):
-        return context.space_data.type == 'IMAGE_EDITOR'
+        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
 
     def draw(self, context):
         layout = self.layout

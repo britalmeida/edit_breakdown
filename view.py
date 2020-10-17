@@ -61,7 +61,8 @@ def calculate_thumbnail_draw_region():
     # If the header and side panels render on top of the region, discount their size.
     # The thumbnails should not be occluded by the UI, even if set to transparent.
     system_prefs = bpy.context.preferences.system
-    if system_prefs.use_region_overlap:
+    transparent_regions = False #system_prefs.use_region_overlap
+    if transparent_regions:
         area = bpy.context.area
         for r in area.regions:
             if r.type == 'HEADER' and r.height > 1:
@@ -270,21 +271,6 @@ def draw_background():
     draw_utils.draw_background((region.width, region.height))
 
 
-tag_colors = {
-    'has_fx': [
-        (0.84, 0.0, 0.85, 0.05),
-        (0.84, 0.0, 0.85, 1.0)],
-    'has_crowd': [
-        (0.92, 0.81, 0.31, 0.05),
-        (0.92, 0.81, 0.31, 1.0)],
-    'animation_complexity': [
-        (0.4, 0.6, 0.75, 0.15),
-        (0.4, 0.6, 0.75, 0.4),
-        (0.4, 0.6, 0.75, 0.65),
-        (0.4, 0.6, 0.75, 1.0),],
-}
-
-
 def draw_tool_active_tag():
     """Draw the value of the active tag on top of each thumbnail"""
 
@@ -309,7 +295,7 @@ def draw_tool_active_tag():
 
         return (base_color[0], base_color[1], base_color[2], alpha)
 
-    active_tool = bpy.context.workspace.tools.from_space_image_mode('UV')
+    active_tool = bpy.context.workspace.tools.from_space_sequencer('PREVIEW')
     if active_tool and active_tool.idname == "edit_breakdown.thumbnail_tag_tool":
 
         # Tags show as full-width stripes at the bottom of thumbnails
@@ -324,15 +310,8 @@ def draw_tool_active_tag():
         user_configured_props = scene.edit_breakdown.shot_custom_props
         prop_config = next((p for p in user_configured_props if p.identifier == tag), None)
 
-        # Hardcoded property
-        if not prop_config:
-            tag_default_value = tag_rna.default
-            for i, img in enumerate(thumbnail_images):
-                value = int(shots[i].get(tag, tag_default_value))
-                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
-
         # Custom property
-        elif prop_config:
+        if prop_config:
             tag_default_value = 0
             # Get the active enum item as an integer value
             if prop_config.data_type == 'ENUM_FLAG':
@@ -348,7 +327,6 @@ def draw_tool_active_tag():
                     value = int(value & active_enum_item != 0)
                 tag_color = get_color_for_tag(prop_config, value)
                 draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
-
 
 
 def draw_overlay():

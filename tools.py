@@ -290,8 +290,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
 
 class ThumbnailSelectTool(WorkSpaceTool):
-    bl_space_type = 'IMAGE_EDITOR'
-    bl_context_mode = 'UV'
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_context_mode = 'PREVIEW'
 
     bl_idname = "edit_breakdown.thumbnail_select_tool"
     bl_label = "Thumbnail Select"
@@ -320,8 +320,8 @@ class ThumbnailSelectTool(WorkSpaceTool):
 
 
 class ThumbnailTagTool(WorkSpaceTool):
-    bl_space_type = 'IMAGE_EDITOR'
-    bl_context_mode = 'UV'
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_context_mode = 'PREVIEW'
 
     bl_idname = "edit_breakdown.thumbnail_tag_tool"
     bl_label = "Thumbnail Tag"
