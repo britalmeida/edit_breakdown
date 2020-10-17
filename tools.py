@@ -21,6 +21,7 @@
 import logging
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.types import (
     Operator,
     WorkSpaceTool,
@@ -49,6 +50,42 @@ def get_thumbnail_under_mouse(mouse_x, mouse_y) -> view.ThumbnailImage:
             return thumb
 
     return None
+
+
+def select_shot(scene, new_selected_thumbnail):
+    """Select the shot matching the given thumbnail (may be None)."""
+
+    # Update draw data
+    view.active_selected_thumbnail = new_selected_thumbnail
+
+    # Update Blender persisted data
+    if new_selected_thumbnail:
+        for i, thumb in enumerate(view.thumbnail_images):
+            if thumb == new_selected_thumbnail:
+                scene.edit_breakdown.selected_shot_idx = i
+                break
+    else:
+        scene.edit_breakdown.selected_shot_idx = -1
+
+
+@persistent
+def update_selected_shot(scene):
+    """Callback when the current frame is changed."""
+
+    shot_idx_to_select = -1
+
+    shots = scene.edit_breakdown.shots
+    for i, shot in enumerate(shots):
+        if shot.frame_start > scene.frame_current:
+            break
+        shot_idx_to_select = i
+
+    if shot_idx_to_select >= 0 and shot_idx_to_select < len(view.thumbnail_images):
+        thumbnail_to_select = view.thumbnail_images[shot_idx_to_select]
+    else:
+        thumbnail_to_select = None
+
+    select_shot(scene, thumbnail_to_select)
 
 
 class SEQUENCER_OT_thumbnail_select(Operator):
@@ -92,20 +129,8 @@ class SEQUENCER_OT_thumbnail_select(Operator):
     def execute(self, context):
         """Mark the thumbnail under the mouse as selected."""
 
-        # Update draw data
-        view.active_selected_thumbnail = view.hovered_thumbnail
-
-        # Update Blender persisted data
-        if view.active_selected_thumbnail:
-            for i, thumb in enumerate(view.thumbnail_images):
-                if thumb == view.hovered_thumbnail:
-                    context.scene.edit_breakdown.selected_shot_idx = i
-                    break
-        else:
-            context.scene.edit_breakdown.selected_shot_idx = -1
-
+        select_shot(context.scene, view.hovered_thumbnail)
         return {'FINISHED'}
-
 
 
 class SEQUENCER_OT_thumbnail_tag(Operator):
@@ -410,8 +435,12 @@ def register():
     bpy.utils.register_tool(ThumbnailSelectTool)
     bpy.utils.register_tool(ThumbnailTagTool)
 
+    bpy.app.handlers.frame_change_post.append(update_selected_shot)
+
 
 def unregister():
+
+    bpy.app.handlers.frame_change_post.remove(update_selected_shot)
 
     bpy.utils.unregister_tool(ThumbnailSelectTool)
     bpy.utils.unregister_tool(ThumbnailTagTool)
