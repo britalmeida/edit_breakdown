@@ -45,8 +45,6 @@ log = logging.getLogger(__name__)
 # Operators #######################################################################################
 
 
-
-
 class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_idname = "edit_breakdown.sync_edit_breakdown"
     bl_label = "Sync Edit Breakdown"
@@ -90,7 +88,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         path = folder_path.joinpath(file_name)
         datablock.save_render(str(path))
 
-
     def calculate_shots_duration(self, context):
         shots = context.scene.edit_breakdown.shots
 
@@ -106,6 +103,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         if scene_total_frames != accumulated_total_frames:
             self.report({'WARNING'},
                 "The frame range does not match the sequencer strips. Edit Breakdown will report incorrect duration")
+
 
     @classmethod
     def poll(cls, context):
@@ -178,7 +176,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
                 if not found:
                     new_shot = shots.add()
-                    new_shot.shot_name = str(thumb.name)
+                    new_shot.name = str(thumb.name)
                     new_shot.frame_start = thumb.name
 
             log.debug(f"Shots: {len(shots)}")

@@ -104,17 +104,17 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
 
-    shot_name: StringProperty(
+    name: StringProperty(
         name="Shot Name",
-        description="",
+        description="Name of this shot",
     )
     frame_start: IntProperty(
         name="Frame",
-        description="",
+        description="Frame at which this shot starts",
     )
     frame_count: IntProperty(
         name="Frame Count",
-        description="",
+        description="Total number of frame this shot has",
         default=0,
     )
     animation_complexity: IntProperty(
@@ -179,7 +179,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['shot_name', 'frame_start', 'frame_count', 'animation_complexity',
+        return ['name', 'frame_start', 'frame_count', 'animation_complexity',
                 'has_fx', 'has_crowd']
 
     @classmethod
@@ -192,12 +192,12 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_attributes(cls):
         # TODO Figure out how to get attributes from the class
-        return ['shot_name', 'frame_start', 'timestamp', 'duration_seconds',
+        return ['name', 'frame_start', 'timestamp', 'duration_seconds',
                 'animation_complexity', 'has_fx', 'has_crowd']
 
     def as_list(self):
         # TODO Generate this list based on get_attributes(). Using getattr does not work.
-        return [self.shot_name, self.frame_start, self.timestamp, self.duration_seconds,
+        return [self.name, self.frame_start, self.timestamp, self.duration_seconds,
                 self.animation_complexity,
                 int(self.has_fx), int(self.has_crowd)]
 
@@ -405,7 +405,7 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         selected_shot = shots[sel_idx]
 
         col = layout.column()
-        col.prop(selected_shot, "shot_name")
+        col.prop(selected_shot, "name")
 
         col.label(text=f"Timestamp: {selected_shot.timestamp}")
         total_seconds = round(selected_shot.duration_seconds)
