@@ -225,8 +225,25 @@ def fit_thumbnails_in_region():
             start_pos_y -= thumbnail_size[1] + spacing[1]
 
 
+def is_thumbnail_view():
+    """True if the current space has the edit breakdown view enabled.
+
+    Note: I found no way of making a new space or mode toggle for this
+    add-on, therefore, I'm hijacking the Display Channels toggle as it
+    seems to be a little used option with no performance impact on the
+    sequencer. This is less than ideal as it breaks the Display Channels
+    functionality and doesn't make for a good user experience.
+    TODO: whenever possible, switch the thumbnail view to its own editor
+    space or add a toggle to the region/area/space if they get support
+    for ID properties."""
+    return bpy.context.space_data.preview_channels == 'COLOR'
+
+
 def draw_edit_thumbnails():
     """Render the edit thumbnails"""
+
+    if not is_thumbnail_view():
+        return
 
     # Load the images the first time they're needed.
     if not thumbnail_images:
@@ -247,6 +264,8 @@ def draw_edit_thumbnails():
 
 
 def draw_background():
+    if not is_thumbnail_view():
+        return
     region = bpy.context.region
     draw_utils.draw_background((region.width, region.height))
 
@@ -335,6 +354,9 @@ def draw_tool_active_tag():
 def draw_overlay():
     """Draw overlay effects on top of the thumbnails"""
 
+    if not is_thumbnail_view():
+        return
+
     draw_tool_active_tag()
 
     if hovered_thumbnail:
@@ -351,17 +373,17 @@ def draw_overlay():
 # Add-on Registration #############################################################################
 
 draw_handles = []
-space = bpy.types.SpaceImageEditor # SpaceSequenceEditor
+space = bpy.types.SpaceSequenceEditor
 
 
 def register():
 
-    draw_handles.append(space.draw_handler_add(draw_background, (), 'WINDOW', 'POST_PIXEL'))
-    draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'WINDOW', 'POST_PIXEL'))
-    draw_handles.append(space.draw_handler_add(draw_overlay, (), 'WINDOW', 'POST_PIXEL'))
+    draw_handles.append(space.draw_handler_add(draw_background, (), 'PREVIEW', 'POST_PIXEL'))
+    draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'PREVIEW', 'POST_PIXEL'))
+    draw_handles.append(space.draw_handler_add(draw_overlay, (), 'PREVIEW', 'POST_PIXEL'))
 
 
 def unregister():
 
     for handle in reversed(draw_handles):
-        space.draw_handler_remove(handle, 'WINDOW')
+        space.draw_handler_remove(handle, 'PREVIEW')

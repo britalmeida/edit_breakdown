@@ -549,6 +549,8 @@ class UI_OT_shot_properties_tooltip(Operator):
 # UI ##############################################################################################
 
 def draw_sequencer_header_extension(self, context):
+    if not view.is_thumbnail_view():
+        return
     layout = self.layout
     layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
     layout.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE')

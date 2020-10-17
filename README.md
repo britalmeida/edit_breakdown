@@ -2,6 +2,12 @@
 
 Get insight on the complexity of an edit.
 
+## Usage (WIP)
+1. In the Sequencer, have a marker for each shot in the edit.
+2. Open a new `Sequencer` area in `Preview` mode, and toggle `Display Channels` to `Color`.
+This is the current sub-optimal way of toggling the thumbnail view on/off, as unfortunately, it is not possible to add new toggles to the sequencer.
+3. Click the Sync button to generate shots and thumbnails.
+
 ## Installation
 
 1. Download this repository as ZIP file.
@@ -16,4 +22,5 @@ Get insight on the complexity of an edit.
 **Alternatively:** this repository can be **cloned** to a folder on disk and that folder linked to the `scripts/addons` folder of the Blender executable. This way, the add-on and be kept up to date with `git pull` without the need to remove/install it.
 
 ### Requirements
-- Blender 2.90 or later.
+- Blender 2.91 daily build later than 14 Oct 2020, or
+- custom build with required patches: 216a2218 (18 Sep, support for marker ID properties) and 57de5686 (14 Oct, fixed gamma correction in the sequencer)
