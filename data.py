@@ -117,6 +117,10 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         description="Total number of frame this shot has",
         default=0,
     )
+    timeline_marker: StringProperty(
+        name="Timeline Marker UUID",
+        description="Unequivocally links this shot with a timeline marker",
+    )
     animation_complexity: IntProperty(
         name="Anim Complexity",
         description="",
@@ -179,7 +183,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['name', 'frame_start', 'frame_count', 'animation_complexity',
+        return ['name', 'frame_start', 'frame_count', 'timeline_marker', 'animation_complexity',
                 'has_fx', 'has_crowd']
 
     @classmethod

@@ -27,6 +27,7 @@ import logging
 import pathlib
 import os
 import sys
+import uuid
 
 import bpy
 from bpy.types import Operator
@@ -49,7 +50,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_idname = "edit_breakdown.sync_edit_breakdown"
     bl_label = "Sync Edit Breakdown"
     bl_description = "Ensure the edit breakdown is up-to-date with the edit"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     @contextlib.contextmanager
     def override_render_settings(self, context, thumbnail_width=256):
@@ -147,41 +148,56 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 self.save_render(bpy.data.images['Render Result'], file_name)
 
         # Load data from the sequence markers marked for use in the edit breakdown
-        def WIP_fake_behaviour():
-            view.load_edit_thumbnails()
-            log.debug(f"Thumbnails: {len(view.thumbnail_images)}")
+        # Match existing markers and existing shots
+        log.debug(f"Starting with {len(markers)} markers, {len(shots)} shots")
 
-            # Delete shots that no longer match a marker
-            shot_data_to_delete = []
-            for i, shot in enumerate(shots):
-                for thumb in view.thumbnail_images:
-                    if shot.frame_start == int(thumb.name):
-                        break #  Found it, do nothing. Skip to next shot.
-                    elif shot.frame_start > int(thumb.name):
-                        shot_data_to_delete.append(i)
-                        break
-            if shot_data_to_delete:
-                self.report({'WARNING'},
-                    f"Orphan shots (currently not deleted): {shot_data_to_delete}")
+        # Ensure every marker has a shot
+        for m in markers:
+            associated_shot = 'uuid' in m.items() and \
+                              next((s for s in shots if m['uuid'] == s.timeline_marker), None)
+            if not associated_shot:
+                # Found a marker without associated shot? Create shot!
+                log.debug(f"Creating new shot for marker {m.name}")
+                new_shot = shots.add()
 
-            for thumb in view.thumbnail_images:
-                # Try to find existing shot data
-                found = False
-                for i, shot in enumerate(shots):
-                    if shot.frame_start == int(thumb.name):
-                        found = True
-                        break #  Found it, do nothing. Skip to next shot.
-                    elif shot.frame_start > int(thumb.name):
-                        break
+                new_shot.name = m.name
+                new_shot.frame_start = m.frame
 
-                if not found:
-                    new_shot = shots.add()
-                    new_shot.name = str(thumb.name)
-                    new_shot.frame_start = thumb.name
+                # Create a unique identifier to associate the marker and the shot.
+                uuid_str = uuid.uuid4().hex
+                new_shot.timeline_marker = uuid_str
+                m['uuid'] = uuid_str
 
-            log.debug(f"Shots: {len(shots)}")
+        # Update all shots with the associated marker data.
+        # Delete shots that no longer match a marker.
+        i = len(shots) - 1
+        while i >= 0:
+            shot = shots[i]
+            match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
+            if match:
+                # Update data.
+                lod.debug(f"Update shot info {i} - {shot.name}")
+                shot.frame_start = m.frame
+                i -= 1
+            else:
+                log.debug(f"Deleting shot {i} - {shot.name}")
+                shots.remove(i)
 
-        WIP_fake_behaviour()
+        # Sort shots per frame number. (Insertion Sort)
+        for i in range(1, len(shots)):# Start at 1, because 0 is trivially sorted.
+            value_being_sorted = shots[i].frame_start
+            # Shuffle 'value_being_sorted' from right-to-left on the sorted part 
+            # of the array, until it reaches its place
+            insert_pos = i - 1
+            while insert_pos >= 0 and shots[insert_pos].frame_start > value_being_sorted:
+                shots.move(insert_pos, insert_pos + 1)
+                insert_pos -= 1
+
+        log.debug("Shots result:")
+        for i, shot in enumerate(shots):
+            log.debug(f"{i} - {shot.name}")
+
+        view.load_edit_thumbnails()
 
         self.calculate_shots_duration(context)
 
