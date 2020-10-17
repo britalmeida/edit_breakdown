@@ -101,12 +101,6 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     )
 
 
-characters = [
-    ("a", "Alice", ""),
-    ("b", "Bob", ""),
-]
-
-
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
 
@@ -140,12 +134,6 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         description="",
         default=False,
     )
-    has_character: EnumProperty(
-        name="Characters",
-        description="Which characters are present in this shot",
-        items=characters,
-        options={'ENUM_FLAG'},
-    )
 
     @property
     def duration_seconds(self):
@@ -161,18 +149,16 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         seconds_to_start = round(start_frame/fps)
         return str(datetime.timedelta(seconds=seconds_to_start))
 
-    @property
-    def character_count(self):
-        """The total number of characters present on this shot"""
+    def count_bits_in_flag(self, prop_id):
+        """The total number of options chosen in a multiple choice property."""
+        value = self.get(prop_id, 0)
+        prop_rna = self.rna_type.properties[prop_id]
+
         count = 0
-        characters = self.has_character
-        prop_rna = self.rna_type.properties['has_character']
-
         for item in prop_rna.enum_items:
-            if item.identifier in characters:
+            if int(item.identifier) & value:
                 count += 1
-
-        return count
+        return count, len(prop_rna.enum_items)
 
 
     @classmethod
@@ -194,7 +180,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
         return ['shot_name', 'frame_start', 'frame_count', 'animation_complexity',
-                'has_fx', 'has_crowd', 'has_character']
+                'has_fx', 'has_crowd']
 
     @classmethod
     def get_custom_properties(cls):
@@ -206,13 +192,13 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_attributes(cls):
         # TODO Figure out how to get attributes from the class
-        return ['shot_name', 'frame_start', 'timestamp', 'duration_seconds' ,'character_count',
+        return ['shot_name', 'frame_start', 'timestamp', 'duration_seconds',
                 'animation_complexity', 'has_fx', 'has_crowd']
 
     def as_list(self):
         # TODO Generate this list based on get_attributes(). Using getattr does not work.
         return [self.shot_name, self.frame_start, self.timestamp, self.duration_seconds,
-                self.character_count, self.animation_complexity,
+                self.animation_complexity,
                 int(self.has_fx), int(self.has_crowd)]
 
 
@@ -425,14 +411,18 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         col.prop(selected_shot, "animation_complexity")
         col.prop(selected_shot, "has_crowd")
         col.prop(selected_shot, "has_fx")
-        col.prop(selected_shot, "has_character")
-        col.label(text=f"Character Count: {selected_shot.character_count}")
 
         # Show user-defined properties
         shot_cls = SEQUENCER_EditBreakdown_Shot
         blend_file_data_props = shot_cls.get_custom_properties()
         for prop in blend_file_data_props:
             col.prop(selected_shot, prop.identifier)
+            # Display a count, if this is an enum
+            prop_rna = selected_shot.bl_rna.properties[prop.identifier]
+            is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
+            if is_enum_flag:
+                num_chosen_options, total_options = selected_shot.count_bits_in_flag(prop.identifier)
+                col.label(text=f"{prop.name} Count: {num_chosen_options} of {total_options}")
 
 
 
@@ -452,10 +442,12 @@ def register_custom_prop(data_cls, prop):
 
         # Construct the enum items
         enum_items = []
+        idx = 1
         items = [i.strip() for i in prop.enum_items.split(',')]
-        for i, item_human_name in enumerate(items):
-            item_code_name = str(i)
+        for item_human_name in items:
+            item_code_name = str(idx)
             enum_items.append((item_code_name, item_human_name, ""))
+            idx *= 2 # Powers of 2, for use in bit flags.
         extra_prop_config = f"items={enum_items},"
 
         if prop.data_type == 'ENUM_FLAG':

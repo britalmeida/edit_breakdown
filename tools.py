@@ -107,26 +107,6 @@ class SEQUENCER_OT_thumbnail_select(Operator):
         return {'FINISHED'}
 
 
-def populate_enum_items_for_shot_custom_properties(self, context):
-    """Generate a complete list of shot properties as an enum list"""
-
-    # Add hardcoded properties
-    enum_items = [
-        ("has_fx", "Has FX", "If a shot requires VFX work"),
-        ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
-        ("has_character", "Characters", "The characters present in each shot"),
-        ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered"),
-    ]
-
-    # Add user-defined properties
-    scene = bpy.context.scene
-    user_configured_props = scene.edit_breakdown.shot_custom_props
-    for prop in user_configured_props:
-        if prop.data_type in ['BOOLEAN', 'INT']:
-            enum_items.append((prop.identifier, prop.name, prop.description))
-
-    return enum_items
-
 
 class SEQUENCER_OT_thumbnail_tag(Operator):
     bl_idname = "edit_breakdown.thumbnail_tag"
@@ -134,24 +114,71 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     bl_description = "Sets properties of edit breakdown thumbnails"
     bl_options = {'REGISTER', 'UNDO'}
 
+    def populate_enum_items_for_shot_custom_properties(self, context):
+        """Generate a complete list of shot properties as an enum list."""
+
+        # Add hardcoded properties
+        enum_items = [
+            ("has_fx", "Has FX", "If a shot requires VFX work"),
+            ("has_crowd", "Has Crowd", "If a shot shows a crowd"),
+            ("animation_complexity", "Anim Complexity", "The difficulty factor of a shot, all things considered"),
+        ]
+
+        # Add user-defined properties
+        user_configured_props = bpy.context.scene.edit_breakdown.shot_custom_props
+        for prop in user_configured_props:
+            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG']:
+                enum_items.append((prop.identifier, prop.name, prop.description))
+
+        return enum_items
+
+
+    def populate_enum_items_for_enum_property(self, context):
+        """Generate an enum list with the available options for an enum property."""
+
+        # Find the property definition.
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        prop_rna = shot_cls.bl_rna.properties[self.tag]
+        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
+
+        # Copy the property's enum items to the tool's enum item,
+        enum_items = []
+        if is_enum_flag:
+            for item in prop_rna.enum_items:
+                enum_items.append((item.identifier, item.name, item.description))
+        return enum_items
+
+
+    def on_tag_update(self, context):
+        """Callback when the current tag is changed"""
+
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        prop_rna = shot_cls.bl_rna.properties[self.tag]
+        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
+        if is_enum_flag:
+            self.tag_enum_option = "1"
+
+
     tag: EnumProperty(
         name="Tag",
         description="Property to set on the shots",
         items=populate_enum_items_for_shot_custom_properties,
+        update=on_tag_update,
     )
-
-    character: EnumProperty(
-        name="Characters",
-        description="All the characters in the movie",
-        items=data.characters,
+    tag_enum_option: EnumProperty(
+        name="Options",
+        description="Possible values for the chosen property",
+        items=populate_enum_items_for_enum_property,
     )
-
     tag_value: IntProperty(
         name="Tag Value",
         description="Value to set the chosen property to",
         default=1,
         min=0,
     )
+
+    def __init__(self):
+        self.tag_enum_options = None
 
     def get_hovered_thumb(self, context):
         """ Get the thumbnail under the mouse, if any."""
@@ -206,10 +233,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 tag_rna = hovered_shot.rna_type.properties[self.tag]
                 is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
                 if is_enum_flag:
-                    #default_value = tag_rna.default_flag
-                    #prev_value = hovered_shot.get(self.tag, default_value)
-                    # Convert the bitflag value to a set of strings
-                    prev_value = hovered_shot.has_character
+                    default_value = 0  #tag_rna.default_flag is a set
+                    prev_value = int(hovered_shot.get(self.tag, default_value))
                 else:
                     default_value = tag_rna.default
                     prev_value = hovered_shot.get(self.tag, default_value)
@@ -224,7 +249,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                         self.tag_value = tag_rna.hard_min
                 elif is_enum_flag:
                     # Toggle flag
-                    self.tag_value = self.character not in prev_value
+                    self.tag_value = prev_value ^ int(self.tag_enum_option)
 
             # Assign the new tag value
             self.execute(context)
@@ -240,17 +265,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
         hovered_shot = self.get_hovered_thumb(context)
 
-        if hovered_shot.rna_type.properties[self.tag].type == 'ENUM':
-            log.debug(f"Setting '{self.tag}':'{self.character}' to {self.tag_value}")
-            character_set = hovered_shot.has_character
-            if self.tag_value:
-                character_set.add(self.character)
-            elif self.character in character_set:
-                character_set.remove(self.character)
-            hovered_shot.has_character = character_set
-        else:
-            log.debug(f"Setting '{self.tag}' to {self.tag_value}")
-            hovered_shot[self.tag] = self.tag_value
+        log.debug(f"Setting '{self.tag}' to {self.tag_value}")
+        hovered_shot[self.tag] = self.tag_value
 
         return {'FINISHED'}
 
@@ -369,8 +385,12 @@ class ThumbnailTagTool(WorkSpaceTool):
     def draw_settings(context, layout, tool):
         props = tool.operator_properties("edit_breakdown.thumbnail_tag")
         layout.prop(props, "tag")
-        if props.tag == 'has_character':
-            layout.prop(props, "character", text="")
+
+        shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        prop_rna = shot_cls.bl_rna.properties[props.tag]
+        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
+        if is_enum_flag:
+            layout.prop(props, "tag_enum_option", text="")
 
 
 

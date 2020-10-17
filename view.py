@@ -258,9 +258,6 @@ tag_colors = {
     'has_crowd': [
         (0.92, 0.81, 0.31, 0.05),
         (0.92, 0.81, 0.31, 1.0)],
-    'has_character': [
-        (0.25, 0.75, 0.25, 0.05),
-        (0.25, 0.75, 0.25, 1.0)],
     'animation_complexity': [
         (0.4, 0.6, 0.75, 0.15),
         (0.4, 0.6, 0.75, 0.4),
@@ -283,7 +280,8 @@ def draw_tool_active_tag():
         base_color = prop_config.color
         alpha = base_color[3]
 
-        if prop_config.data_type == 'BOOLEAN':
+        if prop_config.data_type == 'BOOLEAN' or \
+           prop_config.data_type == 'ENUM_FLAG':
             alpha *= 0.05 if (value == 0) else 1.0
         elif prop_config.data_type == 'INT':
             val_span = prop_config.range_max - prop_config.range_min
@@ -299,37 +297,39 @@ def draw_tool_active_tag():
         tag_size = (thumbnail_size[0], max(4, int(thumbnail_size[1] * 0.23)))
 
         tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag
-        tag_rna = shots[0].rna_type.properties[tag]
+        try:
+            tag_rna = shots[0].rna_type.properties[tag]
+        except KeyError:
+            return
 
         user_configured_props = scene.edit_breakdown.shot_custom_props
         prop_config = next((p for p in user_configured_props if p.identifier == tag), None)
 
-        # Generic Hardcoded property
-        if tag != 'has_character' and not prop_config:
+        # Hardcoded property
+        if not prop_config:
             tag_default_value = tag_rna.default
             for i, img in enumerate(thumbnail_images):
                 value = int(shots[i].get(tag, tag_default_value))
                 draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+
         # Custom property
         elif prop_config:
             tag_default_value = 0
-            for i, img in enumerate(thumbnail_images):
-                value = int(shots[i].get(tag, tag_default_value))
-                tag_color = get_color_for_tag(prop_config, value)
-                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
-        # Hardcoded 'has_character' property
-        else:
-            tag_default_value = 0 #tag_rna.default_flag
-            active_character_tag = active_tool.operator_properties("edit_breakdown.thumbnail_tag").character
-            for item in tag_rna.enum_items:
-                if item.identifier == active_character_tag:
-                    active_character_tag = item.value
-                    break
+            # Get the active enum item as an integer value
+            if prop_config.data_type == 'ENUM_FLAG':
+                try:
+                    active_enum_item = int(active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag_enum_option)
+                except ValueError:
+                    log.warning("Active tag enum value is invalid")
+                    return
 
             for i, img in enumerate(thumbnail_images):
-                value = shots[i].get(tag, tag_default_value)
-                value = int(value & active_character_tag != 0)
-                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_colors[tag][value])
+                value = int(shots[i].get(tag, tag_default_value))
+                if prop_config.data_type == 'ENUM_FLAG':
+                    value = int(value & active_enum_item != 0)
+                tag_color = get_color_for_tag(prop_config, value)
+                draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
+
 
 
 def draw_overlay():
