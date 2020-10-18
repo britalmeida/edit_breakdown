@@ -138,7 +138,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     def count_bits_in_flag(self, prop_id):
         """The total number of options chosen in a multiple choice property."""
-        value = self.get(prop_id, 0)
+        value = self.get_prop_value(prop_id)
         prop_rna = self.rna_type.properties[prop_id]
 
         count = 0
@@ -154,7 +154,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         properties = {prop.identifier for prop in cls.bl_rna.properties if prop.is_runtime}
         return (prop_id in properties)
 
-    def set_prop(self, prop_id: str, value) -> bool:
+    def set_prop_value(self, prop_id: str, value) -> bool:
         """Set the value of a property."""
         if self.__class__.has_prop(prop_id):
             # Note: See note about 'exec' in register_custom_prop().
@@ -162,6 +162,16 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
             return True
         else:
             return False
+
+    def get_prop_value(self, prop_id: str) -> int:
+        """Get the current value of the property"""
+        prop_rna = self.rna_type.properties[prop_id]
+        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
+        if is_enum_flag:
+            default_value = 0  #prop_rna.default_flag is a set. TODO convert set to int.
+        else:
+            default_value = prop_rna.default
+        return int(self.get(prop_id, default_value))
 
     @classmethod
     def get_hardcoded_properties(cls):
@@ -173,16 +183,48 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         """Get a list of the user defined properties for Shots"""
         custom_rna_properties = {prop for prop in cls.bl_rna.properties if (prop.is_runtime
             and prop.identifier not in cls.get_hardcoded_properties())}
-        return custom_rna_properties
+        return sorted(custom_rna_properties, key=lambda x: x.name, reverse=False)
 
     @classmethod
-    def get_attributes(cls):
-        # TODO Figure out how to get attributes from the class
-        return ['name', 'frame_start', 'timestamp', 'duration_seconds']
+    def get_csv_export_header(cls):
+        """Returns a list of human readable names for the CSV column headers"""
+        attrs = ['Name', 'Start Frame', 'Timestamp', 'Duration (s)']
+        for prop in cls.get_custom_properties():
+            if prop.type == 'INT':
+                attrs.append(f"{prop.name} ({prop.hard_min}-{prop.hard_max})")
+            elif prop.type == 'ENUM' and prop.is_enum_flag:
+                attrs.append(f"{prop.name} Count ({len(prop.enum_items)})")
+                for item in prop.enum_items:
+                    attrs.append(f"{prop.name} - {item.name}")
+            elif prop.type == 'ENUM' and not prop.is_enum_flag:
+                attrs.append(f"{prop.name} (value)")
+                attrs.append(f"{prop.name} (named)")
+            else:
+                attrs.append(prop.name)
+        return attrs
 
-    def as_list(self):
-        # TODO Generate this list based on get_attributes(). Using getattr does not work.
-        return [self.name, self.frame_start, self.timestamp, self.duration_seconds]
+    def get_csv_export_values(self):
+        """Returns a list of values for the CSV exported properties"""
+        values = [self.name, self.frame_start, self.timestamp, self.duration_seconds]
+        for prop in self.get_custom_properties():
+            if prop.type == 'ENUM' and prop.is_enum_flag:
+                # Add count
+                num_chosen_options, total_options = self.count_bits_in_flag(prop.identifier)
+                values.append(num_chosen_options)
+                # Add each option as a boolean
+                value = self.get_prop_value(prop.identifier)
+                for item in prop.enum_items:
+                    values.append(1 if int(item.identifier) & value else 0)
+            elif prop.type == 'ENUM' and not prop.is_enum_flag:
+                option_value = self.get_prop_value(prop.identifier)
+                values.append(option_value)
+                values.append(prop.enum_items[option_value].name)
+            elif prop.type == 'STRING':
+                values.append(self.get(prop.identifier, ""))
+            else:
+                values.append(self.get_prop_value(prop.identifier))
+        return values
+
 
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):

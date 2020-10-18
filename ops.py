@@ -220,17 +220,15 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
     def execute(self, context):
         """Called to finish this operator's action."""
 
-        log.debug("copy_edit_breakdown_as_csv: execute")
-
+        log.info('Saving CSV to clipboard')
         sequence_ed = context.scene.sequence_editor
         shots = context.scene.edit_breakdown.shots
-        log.info('Saving CSV to clipboard')
 
         # Create shot list that becomes a CSV, starting with the header
-        shots_for_csv = [data.SEQUENCER_EditBreakdown_Shot.get_attributes()]
+        shots_for_csv = [data.SEQUENCER_EditBreakdown_Shot.get_csv_export_header()]
         # Push each shot in the list
         for shot in shots:
-            shots_for_csv.append(shot.as_list())
+            shots_for_csv.append(shot.get_csv_export_values())
 
         # Write the CSV in memory
         outbuf = io.StringIO()
@@ -383,11 +381,10 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
 
         def get_prop_used_range(shots, prop_id):
             """Get the minimum and maximum values actually in use for the given property."""
-            default_value = 0 # When property is not set
             min_val = sys.maxsize
             max_val = ~sys.maxsize
             for shot in shots:
-                val = int(shot.get(prop_id, default_value))
+                val = int(shot.get_prop_value(prop_id))
                 min_val = min(min_val, val)
                 max_val = max(max_val, val)
             return min_val, max_val
@@ -461,7 +458,7 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
                 for shot in shots:
                     val = int(shot.get(self.prop_id, default_value))
                     new_val = max(self.range_min, min(val, self.range_max))
-                    shot.set_prop(self.prop_id, new_val)
+                    shot.set_prop_value(self.prop_id, new_val)
             elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
                 items = [i.strip() for i in self.enum_items.split(',')]
 

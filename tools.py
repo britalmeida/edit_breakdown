@@ -245,12 +245,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             # Get the current value of the property
             tag_rna = hovered_shot.rna_type.properties[self.tag]
             is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
-            if is_enum_flag:
-                default_value = 0  #tag_rna.default_flag is a set
-                prev_value = int(hovered_shot.get(self.tag, default_value))
-            else:
-                default_value = tag_rna.default
-                prev_value = hovered_shot.get(self.tag, default_value)
+            prev_value = hovered_shot.get_prop_value(self.tag)
 
             # Toggle the tag - Determine the new value to set the property to.
             if event.type == 'LEFTMOUSE':
