@@ -153,7 +153,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         # Ensure every marker has a shot
         for m in markers:
-            associated_shot = 'uuid' in m.items() and \
+            associated_shot = 'uuid' in m.keys() and \
                               next((s for s in shots if m['uuid'] == s.timeline_marker), None)
             if not associated_shot:
                 # Found a marker without associated shot? Create shot!
