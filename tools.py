@@ -195,8 +195,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         min=0,
     )
 
-    def __init__(self):
-        self.tag_enum_options = None
 
     def get_hovered_thumb(self, context):
         """ Get the thumbnail under the mouse, if any."""
@@ -244,19 +242,18 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             if not hovered_shot:
                 return {'FINISHED'}
 
+            # Get the current value of the property
+            tag_rna = hovered_shot.rna_type.properties[self.tag]
+            is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
+            if is_enum_flag:
+                default_value = 0  #tag_rna.default_flag is a set
+                prev_value = int(hovered_shot.get(self.tag, default_value))
+            else:
+                default_value = tag_rna.default
+                prev_value = hovered_shot.get(self.tag, default_value)
+
             # Toggle the tag - Determine the new value to set the property to.
             if event.type == 'LEFTMOUSE':
-
-                # Get the current value of the property
-                tag_rna = hovered_shot.rna_type.properties[self.tag]
-                is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
-                if is_enum_flag:
-                    default_value = 0  #tag_rna.default_flag is a set
-                    prev_value = int(hovered_shot.get(self.tag, default_value))
-                else:
-                    default_value = tag_rna.default
-                    prev_value = hovered_shot.get(self.tag, default_value)
-
                 if tag_rna.type == 'BOOLEAN':
                     # Toggle
                     self.tag_value = not prev_value
@@ -268,6 +265,21 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 elif is_enum_flag:
                     # Toggle flag
                     self.tag_value = prev_value ^ int(self.tag_enum_option)
+
+            # Sanitize direct value assignment
+            elif (event.type >= 'NUMPAD_0' and event.type <= 'NUMPAD_9') or \
+                 (event.type >= 'ZERO' and event.type <= 'NINE'):
+
+                if tag_rna.type == 'BOOLEAN':  # 0 or 1, not higher
+                    self.tag_value = 0 if self.tag_value == 0 else 1
+                elif tag_rna.type == 'INT':  # Clamp to user-defined range
+                    self.tag_value = max(tag_rna.hard_min, min(self.tag_value, tag_rna.hard_max))
+                elif is_enum_flag:  # Input of 0 or 1 should toggle active flag on/off
+                    if self.tag_value == 0:
+                        self.tag_value = prev_value & ~int(self.tag_enum_option)
+                    else: # 1 or higher is "turn on"
+                        self.tag_value = prev_value | int(self.tag_enum_option)
+
 
             # Assign the new tag value
             self.execute(context)
