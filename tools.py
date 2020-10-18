@@ -130,6 +130,13 @@ class SEQUENCER_OT_thumbnail_select(Operator):
         """Mark the thumbnail under the mouse as selected."""
 
         select_shot(context.scene, view.hovered_thumbnail)
+
+        # Update the current frame to match
+        eb = context.scene.edit_breakdown
+        if eb.selected_shot_idx >= 0:
+            new_frame = eb.shots[eb.selected_shot_idx].frame_start
+            context.scene.frame_current = new_frame
+
         return {'FINISHED'}
 
 
