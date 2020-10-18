@@ -70,7 +70,7 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     description: StringProperty(
         name="Description",
         description="Details on the meaning of the property",
-        default="A description"
+        default=""
     )
     data_type: StringProperty(
         name="Type",
