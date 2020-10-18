@@ -392,6 +392,56 @@ class ThumbnailTagTool(WorkSpaceTool):
             {"type": 'NUMPAD_9', "value": 'PRESS'},
             {"properties": [("tag_value", 9)]}
         ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'ZERO', "value": 'PRESS'},
+            {"properties": [("tag_value", 0)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'ONE', "value": 'PRESS'},
+            {"properties": [("tag_value", 1)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'TWO', "value": 'PRESS'},
+            {"properties": [("tag_value", 2)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'THREE', "value": 'PRESS'},
+            {"properties": [("tag_value", 3)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'FOUR', "value": 'PRESS'},
+            {"properties": [("tag_value", 4)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'FIVE', "value": 'PRESS'},
+            {"properties": [("tag_value", 5)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'SIX', "value": 'PRESS'},
+            {"properties": [("tag_value", 6)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'SEVEN', "value": 'PRESS'},
+            {"properties": [("tag_value", 7)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'EIGHT', "value": 'PRESS'},
+            {"properties": [("tag_value", 8)]}
+        ),
+        (
+            "edit_breakdown.thumbnail_tag",
+            {"type": 'NINE', "value": 'PRESS'},
+            {"properties": [("tag_value", 9)]}
+        ),
         # Selection
         (
             "edit_breakdown.thumbnail_select",
