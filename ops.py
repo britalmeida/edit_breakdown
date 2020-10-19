@@ -24,8 +24,9 @@ import csv
 import io
 import json
 import logging
-import pathlib
 import os
+import pathlib
+import time
 import sys
 import uuid
 
@@ -116,7 +117,8 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         Recreate the edit breakdown data based on the current edit.
         """
 
-        log.debug("sync_edit_breakdown: execute")
+        log.info("Syncing edit markers to thumbnails and shot data...")
+        time_start = time.time()
 
         scene = context.scene
         sequence_ed = scene.sequence_editor
@@ -138,7 +140,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 path.unlink()
 
         # Render a thumbnail to disk per each frame
-        log.info("Creating thumbnails")
+        log.info("Creating thumbnails...")
         markers = scene.timeline_markers
         with self.override_render_settings(context):
             for m in markers:
@@ -146,10 +148,11 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 bpy.ops.render.render()
                 file_name = f'{str(context.scene.frame_current)}.jpg'
                 self.save_render(bpy.data.images['Render Result'], file_name)
+        log.info(f"Thumbnails generated in {(time.time() - time_start):.2f}s")
 
         # Load data from the sequence markers marked for use in the edit breakdown
         # Match existing markers and existing shots
-        log.debug(f"Starting with {len(markers)} markers, {len(shots)} shots")
+        log.debug(f"Syncing {len(markers)} markers -> {len(shots)} shots")
 
         # Ensure every marker has a shot
         for m in markers:
@@ -173,11 +176,11 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         i = len(shots) - 1
         while i >= 0:
             shot = shots[i]
-            match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
-            if match:
+            marker_match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
+            if marker_match:
                 # Update data.
                 log.debug(f"Update shot info {i} - {shot.name}")
-                shot.frame_start = m.frame
+                shot.frame_start = marker_match.frame
                 i -= 1
             else:
                 log.debug(f"Deleting shot {i} - {shot.name}")
@@ -193,10 +196,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 shots.move(insert_pos, insert_pos + 1)
                 insert_pos -= 1
 
-        log.debug("Shots result:")
-        for i, shot in enumerate(shots):
-            log.debug(f"{i} - {shot.name}")
-
         view.load_edit_thumbnails()
 
         self.calculate_shots_duration(context)
@@ -204,6 +203,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Position the images according to the available space.
         view.fit_thumbnails_in_region()
 
+        log.info(f"Syncing done in {(time.time() - time_start):.2f}s")
         return {'FINISHED'}
 
 
