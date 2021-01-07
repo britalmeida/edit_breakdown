@@ -203,8 +203,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     )
 
 
-    def get_hovered_thumb(self, context):
-        """ Get the thumbnail under the mouse, if any."""
+    def get_hovered_shot(self, context):
+        """Get the shot represented by the thumbnail under the mouse, if any."""
 
         # Find the hovered thumbnail index in the edit breakdown shot data
         hovered_thumbnail_idx =-1
@@ -245,7 +245,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 return {'FINISHED'}
 
             # Get the thumbnail under the mouse, if any.
-            hovered_shot = self.get_hovered_thumb(context)
+            hovered_shot = self.get_hovered_shot(context)
             if not hovered_shot:
                 return {'FINISHED'}
 
@@ -295,7 +295,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     def execute(self, context):
         """Set the tag to a certain value for the hovered shot."""
 
-        hovered_shot = self.get_hovered_thumb(context)
+        hovered_shot = self.get_hovered_shot(context)
 
         log.debug(f"Setting '{self.tag}' to {self.tag_value}")
         hovered_shot[self.tag] = self.tag_value
