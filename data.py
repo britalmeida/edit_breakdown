@@ -18,7 +18,6 @@
 
 # <pep8 compliant>
 
-import datetime
 import logging
 
 import bpy
@@ -41,6 +40,46 @@ from bpy.props import (
 from . import view
 
 log = logging.getLogger(__name__)
+
+
+# Utilities #######################################################################################
+
+def timestamp_str(num_frames: int) -> str:
+    """Returns an absolute frame or duration as a timestamp string"""
+
+    scene = bpy.context.scene
+    fps = scene.render.fps / scene.render.fps_base
+    sign = "-" if num_frames < 0 else ""
+    num_frames = abs(num_frames)
+
+    # Note: format is very similar to smpte_from_frame, but with ms instead of sub-second frames.
+    h = int(num_frames / (3600 * fps))
+    m = int((num_frames / (60 * fps)) % 60)
+    s = int((num_frames / fps) % 60)
+    ms = int((num_frames % fps) * (1000 / fps))
+    return f"{sign}{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
+
+
+def draw_frame_prop(layout: bpy.types.UILayout, prop_label: str, prop_value: int):
+    """Add a property to Blender's UI, showing timestamp and number of frames"""
+
+    split = layout.split(factor=0.4, align=True)
+    split.alignment = 'RIGHT'
+    split.label(text=prop_label)
+    split = split.split(factor=0.75, align=True)
+    split.label(text=timestamp_str(prop_value))
+    split.alignment = 'RIGHT'
+    split.label(text=f"{prop_value} ")
+
+
+def draw_stat_label(layout: bpy.types.UILayout, label: str, value: str):
+    """Add a label-value pair to Blender's UI, aligned as a split property"""
+
+    split = layout.split(factor=0.4, align=True)
+    split.alignment = 'RIGHT'
+    split.label(text=label)
+    split.alignment = 'LEFT'
+    split.label(text=value)
 
 
 
@@ -109,12 +148,15 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         description="Name of this shot",
     )
     frame_start: IntProperty(
-        name="Frame",
+        name="Start Frame",
         description="Frame at which this shot starts",
+        subtype="TIME",
     )
     frame_count: IntProperty(
         name="Frame Count",
         description="Total number of frame this shot has",
+        subtype="TIME",
+        soft_min=0,
         default=0,
     )
     timeline_marker: StringProperty(
@@ -125,16 +167,8 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @property
     def duration_seconds(self):
         """The duration of this shot, in seconds"""
-        fps = bpy.context.scene.render.fps
+        fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
         return round(self.frame_count/fps, 1)
-
-    @property
-    def timestamp(self):
-        """The time at which this shot starts in the edit"""
-        fps = bpy.context.scene.render.fps
-        start_frame = max(0, self.frame_start - bpy.context.scene.frame_start)
-        seconds_to_start = round(start_frame/fps)
-        return str(datetime.timedelta(seconds=seconds_to_start))
 
     def count_bits_in_flag(self, prop_id):
         """The total number of options chosen in a multiple choice property."""
@@ -146,7 +180,6 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
             if int(item.identifier) & value:
                 count += 1
         return count, len(prop_rna.enum_items)
-
 
     @classmethod
     def has_prop(cls, prop_id: str) -> bool:
@@ -205,7 +238,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     def get_csv_export_values(self):
         """Returns a list of values for the CSV exported properties"""
-        values = [self.name, self.frame_start, self.timestamp, self.duration_seconds]
+        values = [self.name, self.frame_start, timestamp_str(self.frame_start), self.duration_seconds]
         for prop in self.get_custom_properties():
             if prop.type == 'ENUM' and prop.is_enum_flag:
                 # Add count
@@ -249,9 +282,13 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
     @property
     def total_frames(self):
-        """The total number of frames in the edit, according to the scene frame range."""
-        scene = bpy.context.scene
-        return scene.frame_end - scene.frame_start
+        """The total number of frames in the edit, according to the shot range"""
+
+        if len(self.shots) < 1:
+            return 0
+        first_shot = self.shots[0]
+        last_shot = self.shots[-1]
+        return last_shot.frame_start + last_shot.frame_count - first_shot.frame_start
 
 
 
@@ -393,15 +430,9 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
 
         edit_breakdown = context.scene.edit_breakdown
 
-        col = layout.column()
-        col.label(text=f"Shots: {len(edit_breakdown.shots)}")
-
-        total_frames = edit_breakdown.total_frames
-        col.label(text=f"Frames: {total_frames}")
-        fps = context.scene.render.fps
-        total_seconds = round(total_frames/fps)
-        duration_str = str(datetime.timedelta(seconds=total_seconds))
-        col.label(text=f"Duration: {duration_str}")
+        col = layout.column(align=True)
+        draw_stat_label(col, "Shots", f"{len(edit_breakdown.shots)}")
+        draw_frame_prop(col, "Duration", edit_breakdown.total_frames)
 
 
 class SEQUENCER_PT_edit_breakdown_shot(Panel):
@@ -432,10 +463,10 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         col = layout.column()
         col.prop(selected_shot, "name")
 
-        col.label(text=f"Timestamp: {selected_shot.timestamp}")
-        total_seconds = round(selected_shot.duration_seconds)
-        m, s = divmod(total_seconds, 60)
-        col.label(text=f"Duration: {m:02d}:{s:02d}")
+        # Display frame information with a timestamp.
+        sub = col.column(align=True)
+        draw_frame_prop(sub, "Start Frame", selected_shot.frame_start)
+        draw_frame_prop(sub, "Duration", selected_shot.frame_count)
 
         # Show user-defined properties
         shot_cls = SEQUENCER_EditBreakdown_Shot

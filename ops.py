@@ -91,20 +91,15 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         datablock.save_render(str(path))
 
     def calculate_shots_duration(self, context):
-        shots = context.scene.edit_breakdown.shots
+        scene = context.scene
+        shots = scene.edit_breakdown.shots
 
         accumulated_total_frames = 0
-        last_frame = max(context.scene.frame_end, shots[-1].frame_start)
+        last_frame = max(scene.frame_end, shots[-1].frame_start)
         for shot in reversed(shots):
             shot.frame_count = last_frame - shot.frame_start
             last_frame = shot.frame_start
             accumulated_total_frames += shot.frame_count
-
-        scene = context.scene
-        scene_total_frames = scene.frame_end - scene.frame_start
-        if scene_total_frames != accumulated_total_frames:
-            self.report({'WARNING'},
-                "The frame range does not match the sequencer strips. Edit Breakdown will report incorrect duration")
 
 
     @classmethod
