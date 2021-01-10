@@ -501,9 +501,10 @@ def register_custom_prop(data_cls, prop):
         idx = 1
         items = [i.strip() for i in prop.enum_items.split(',')]
         for item_human_name in items:
-            item_code_name = str(idx)
-            enum_items.append((item_code_name, item_human_name, ""))
-            idx *= 2 # Powers of 2, for use in bit flags.
+            if item_human_name:
+                item_code_name = str(idx)
+                enum_items.append((item_code_name, item_human_name, ""))
+                idx *= 2 # Powers of 2, for use in bit flags.
         extra_prop_config = f"items={enum_items},"
 
         if prop.data_type == 'ENUM_FLAG':
