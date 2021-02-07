@@ -228,7 +228,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
             elif prop.type == 'ENUM' and prop.is_enum_flag:
                 attrs.append(f"{prop.name} Count ({len(prop.enum_items)})")
                 for item in prop.enum_items:
-                    attrs.append(f"{prop.name} - {item.name}")
+                    attrs.append(f"{item.name}")
             elif prop.type == 'ENUM' and not prop.is_enum_flag:
                 attrs.append(f"{prop.name} (value)")
                 attrs.append(f"{prop.name} (named)")
