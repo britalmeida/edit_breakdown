@@ -251,7 +251,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         name="Tag Value",
         description="Value to set the chosen property to",
         default=1,
-        min=0,
     )
 
 
