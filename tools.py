@@ -146,6 +146,13 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     bl_description = "Sets properties of edit breakdown thumbnails"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # Workaround Note: Blender will store the current value of dynamic enum props as an int instead
+    # of the identifier. This causes issues when deleting/adding custom props as the selected enum
+    # item won't be stable. As a workaround, backup the enum value as a string and override the
+    # enum prop's get/set to keep its current value in sync by identifier instead of by position.
+    tag_str : str = None  # Shadow copy of the current 'tag' enum value as a str.
+    tag_enum_items = []
+
     def populate_enum_items_for_shot_custom_properties(self, context):
         """Generate a complete list of shot properties as an enum list."""
 
@@ -155,7 +162,11 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         for prop in user_configured_props:
             if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG']:
                 enum_items.append((prop.identifier, prop.name, prop.description))
-        return enum_items
+
+        # Store the enum items in this class to workaround a bug where Blender mangles the strings.
+        SEQUENCER_OT_thumbnail_tag.tag_enum_items = enum_items
+
+        return SEQUENCER_OT_thumbnail_tag.tag_enum_items
 
 
     def populate_enum_items_for_enum_property(self, context):
@@ -174,6 +185,45 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         return enum_items
 
 
+    def get_tag(self):
+        """Get the current value of the tag enum prop by matching it with tag_str"""
+
+        # Collect the IDs of all taggable custom properties.
+        # Note: don't re-use the IDs stored in the class variable to workaround the string mangling.
+        prop_ids = []
+        user_configured_props = bpy.context.scene.edit_breakdown.shot_custom_props
+        for prop in user_configured_props:
+            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG']:
+                prop_ids.append(prop.identifier)
+
+        if prop_ids:
+            curent_int_value = self["tag"]
+
+            for i, prop_id in enumerate(prop_ids):
+                # If the backup enum value as string was not set yet, set it
+                if not SEQUENCER_OT_thumbnail_tag.tag_str and i == curent_int_value:
+                    SEQUENCER_OT_thumbnail_tag.tag_str = prop_id
+                    return i
+                # Found prop matching the identifier?
+                if prop_id == SEQUENCER_OT_thumbnail_tag.tag_str:
+                    return i
+
+        # Could not find a match.
+        # Either the previous selected prop was deleted or there are no props.
+        SEQUENCER_OT_thumbnail_tag.tag_str = None
+        return 0
+
+    def set_tag(self, value):
+        """Set the current value of the tag enum prop and of tag_str"""
+
+        # Set the value as normal
+        self["tag"] = value
+
+        # Backup the tag value as a string
+        enum_item = SEQUENCER_OT_thumbnail_tag.tag_enum_items[value]
+        SEQUENCER_OT_thumbnail_tag.tag_str = enum_item[0]
+
+
     def on_tag_update(self, context):
         """Callback when the current tag is changed"""
 
@@ -189,6 +239,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         description="Property to set on the shots",
         items=populate_enum_items_for_shot_custom_properties,
         update=on_tag_update,
+        get=get_tag,
+        set=set_tag,
     )
     tag_enum_option: EnumProperty(
         name="Options",
@@ -466,6 +518,12 @@ class ThumbnailTagTool(WorkSpaceTool):
 
     def draw_settings(context, layout, tool):
         props = tool.operator_properties("edit_breakdown.thumbnail_tag")
+
+        if not props.tag:
+            layout.label(
+                icon='QUESTION',
+                text="Shot properties can be configured in the edit breakdown add-on settings")
+            return
         layout.prop(props, "tag")
 
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
