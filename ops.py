@@ -39,6 +39,7 @@ from bpy.props import (
 )
 
 from . import data
+from . import tools
 from . import view
 
 log = logging.getLogger(__name__)
@@ -93,13 +94,13 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     def calculate_shots_duration(self, context):
         scene = context.scene
         shots = scene.edit_breakdown.shots
+        if not shots:
+            return
 
-        accumulated_total_frames = 0
         last_frame = max(scene.frame_end, shots[-1].frame_start)
         for shot in reversed(shots):
             shot.frame_count = last_frame - shot.frame_start
             last_frame = shot.frame_start
-            accumulated_total_frames += shot.frame_count
 
 
     @classmethod
@@ -117,6 +118,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         scene = context.scene
         sequence_ed = scene.sequence_editor
+        markers = scene.timeline_markers
         shots = scene.edit_breakdown.shots
 
         # Clear the previous runtime data.
@@ -136,7 +138,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         # Render a thumbnail to disk per each frame
         log.info("Creating thumbnails...")
-        markers = scene.timeline_markers
         with self.override_render_settings(context):
             for m in markers:
                 scene.frame_current = m.frame
@@ -168,15 +169,14 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         # Update all shots with the associated marker data.
         # Delete shots that no longer match a marker.
-        i = len(shots) - 1
-        while i >= 0:
-            shot = shots[i]
+        i = len(shots)
+        for shot in reversed(shots):
+            i -= 1
             marker_match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
             if marker_match:
                 # Update data.
                 log.debug(f"Update shot info {i} - {shot.name}")
                 shot.frame_start = marker_match.frame
-                i -= 1
             else:
                 log.debug(f"Deleting shot {i} - {shot.name}")
                 shots.remove(i)
@@ -191,9 +191,12 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 shots.move(insert_pos, insert_pos + 1)
                 insert_pos -= 1
 
-        view.load_edit_thumbnails()
-
+        # Calculate frame count information for each shot.
         self.calculate_shots_duration(context)
+
+        # Update the thumbnails view
+        view.load_edit_thumbnails()
+        tools.update_selected_shot(scene)
 
         # Position the images according to the available space.
         view.fit_thumbnails_in_region()
