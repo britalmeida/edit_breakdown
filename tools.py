@@ -324,8 +324,9 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                             self.tag_value = enum_option_val
 
             # Sanitize direct value assignment
-            elif (event.type >= 'NUMPAD_0' and event.type <= 'NUMPAD_9') or \
-                 (event.type >= 'ZERO' and event.type <= 'NINE'):
+            elif event.type in {'NUMPAD_0', 'NUMPAD_1', 'NUMPAD_2', 'NUMPAD_3', 'NUMPAD_4',
+                                'NUMPAD_5', 'NUMPAD_6', 'NUMPAD_7', 'NUMPAD_8', 'NUMPAD_9', 'ONE',
+                                'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'}:
 
                 if tag_rna.type == 'BOOLEAN':  # 0 or 1, not higher
                     self.tag_value = 0 if self.tag_value == 0 else 1
