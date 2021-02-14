@@ -251,7 +251,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
             elif prop.type == 'ENUM' and not prop.is_enum_flag:
                 option_value = self.get_prop_value(prop.identifier)
                 values.append(option_value)
-                values.append(prop.enum_items[option_value].name)
+                values.append("" if option_value == -1 else prop.enum_items[option_value].name)
             elif prop.type == 'STRING':
                 values.append(self.get(prop.identifier, ""))
             else:
@@ -516,7 +516,7 @@ def register_custom_prop(data_cls, prop):
         # prop.identifier is fully controlled by code, not user input, and therefore
         # there should be no danger of code injection.
         registration_expr = f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}', {extra_prop_config})"
-        log.debug(f"Registering custom property = {registration_expr}")
+        log.debug(f"Registering custom property: {registration_expr}")
         exec(registration_expr)
 
 

@@ -160,7 +160,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         enum_items = []
         user_configured_props = bpy.context.scene.edit_breakdown.shot_custom_props
         for prop in user_configured_props:
-            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG']:
+            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG', 'ENUM_VAL']:
                 enum_items.append((prop.identifier, prop.name, prop.description))
 
         # Store the enum items in this class to workaround a bug where Blender mangles the strings.
@@ -175,15 +175,13 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         # Find the property definition.
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
         prop_rna = shot_cls.bl_rna.properties[self.tag]
-        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
 
         # Copy the property's enum items to the tool's enum item,
         enum_items = []
-        if is_enum_flag:
+        if prop_rna.type == 'ENUM':
             for item in prop_rna.enum_items:
                 enum_items.append((item.identifier, item.name, item.description))
         return enum_items
-
 
     def get_tag(self):
         """Get the current value of the tag enum prop by matching it with tag_str"""
@@ -193,7 +191,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         prop_ids = []
         user_configured_props = bpy.context.scene.edit_breakdown.shot_custom_props
         for prop in user_configured_props:
-            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG']:
+            if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG', 'ENUM_VAL']:
                 prop_ids.append(prop.identifier)
 
         if prop_ids:
@@ -229,9 +227,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
         prop_rna = shot_cls.bl_rna.properties[self.tag]
-        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
-        if is_enum_flag:
-            self.tag_enum_option = "1"
+        is_enum = prop_rna.type == 'ENUM'
+        self.tag_enum_option = "1"
 
 
     tag: EnumProperty(
@@ -302,7 +299,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
             # Get the current value of the property
             tag_rna = hovered_shot.rna_type.properties[self.tag]
-            is_enum_flag = tag_rna.type == 'ENUM' and tag_rna.is_enum_flag
             prev_value = hovered_shot.get_prop_value(self.tag)
 
             # Toggle the tag - Determine the new value to set the property to.
@@ -315,9 +311,17 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                     self.tag_value = prev_value + 1
                     if self.tag_value > tag_rna.hard_max:
                         self.tag_value = tag_rna.hard_min
-                elif is_enum_flag:
-                    # Toggle flag
-                    self.tag_value = prev_value ^ int(self.tag_enum_option)
+                elif tag_rna.type == 'ENUM':
+                    if tag_rna.is_enum_flag:
+                        # Toggle flag
+                        self.tag_value = prev_value ^ int(self.tag_enum_option)
+                    else:
+                        # Set to the currently chosen enum option or unset
+                        enum_option_val = int(self.tag_enum_option).bit_length() - 1
+                        if (prev_value == enum_option_val):
+                            self.tag_value = -1
+                        else:
+                            self.tag_value = enum_option_val
 
             # Sanitize direct value assignment
             elif (event.type >= 'NUMPAD_0' and event.type <= 'NUMPAD_9') or \
@@ -327,11 +331,17 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                     self.tag_value = 0 if self.tag_value == 0 else 1
                 elif tag_rna.type == 'INT':  # Clamp to user-defined range
                     self.tag_value = max(tag_rna.hard_min, min(self.tag_value, tag_rna.hard_max))
-                elif is_enum_flag:  # Input of 0 or 1 should toggle active flag on/off
-                    if self.tag_value == 0:
-                        self.tag_value = prev_value & ~int(self.tag_enum_option)
-                    else: # 1 or higher is "turn on"
-                        self.tag_value = prev_value | int(self.tag_enum_option)
+                elif tag_rna.type == 'ENUM': # Input of 0 or 1 should toggle active flag on/off
+                    if tag_rna.is_enum_flag:
+                        if self.tag_value == 0:
+                            self.tag_value = prev_value & ~int(self.tag_enum_option)
+                        else: # 1 or higher is "turn on"
+                            self.tag_value = prev_value | int(self.tag_enum_option)
+                    else:
+                        if self.tag_value == 0:
+                            self.tag_value = -1
+                        else: # 1 or higher is "turn on"
+                            self.tag_value = int(self.tag_enum_option).bit_length() - 1
 
 
             # Assign the new tag value
@@ -527,8 +537,7 @@ class ThumbnailTagTool(WorkSpaceTool):
 
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
         prop_rna = shot_cls.bl_rna.properties[props.tag]
-        is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
-        if is_enum_flag:
+        if prop_rna.type == 'ENUM':
             layout.prop(props, "tag_enum_option", text="")
 
 

@@ -285,8 +285,7 @@ def draw_tool_active_tag():
         base_color = prop_config.color
         alpha = base_color[3]
 
-        if prop_config.data_type == 'BOOLEAN' or \
-           prop_config.data_type == 'ENUM_FLAG':
+        if prop_config.data_type in ['BOOLEAN', 'ENUM_FLAG', 'ENUM_VAL']:
             alpha *= 0.05 if (value == 0) else 1.0
         elif prop_config.data_type == 'INT':
             val_span = prop_config.range_max - prop_config.range_min
@@ -314,9 +313,12 @@ def draw_tool_active_tag():
         if prop_config:
             tag_default_value = 0
             # Get the active enum item as an integer value
-            if prop_config.data_type == 'ENUM_FLAG':
+            if prop_config.data_type in ['ENUM_FLAG', 'ENUM_VAL']:
                 try:
                     active_enum_item = int(active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag_enum_option)
+                    # Convert power of 2 value to a sequential index
+                    if prop_config.data_type == 'ENUM_VAL':
+                        active_enum_item = active_enum_item.bit_length() - 1
                 except ValueError:
                     log.warning("Active tag enum value is invalid")
                     return
@@ -325,6 +327,8 @@ def draw_tool_active_tag():
                 value = int(shots[i].get(tag, tag_default_value))
                 if prop_config.data_type == 'ENUM_FLAG':
                     value = int(value & active_enum_item != 0)
+                elif prop_config.data_type == 'ENUM_VAL':
+                    value = int(value == active_enum_item)
                 tag_color = get_color_for_tag(prop_config, value)
                 draw_utils.draw_boolean_tag(img.pos, tag_size, tag_color)
 
