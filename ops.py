@@ -460,6 +460,9 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
             elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
                 items = [i.strip() for i in self.enum_items.split(',')]
 
+        # Redraw the list of properties with the inlined property information.
+        context.region.tag_redraw()
+
         return {'FINISHED'}
 
 
