@@ -544,9 +544,34 @@ class UI_OT_shot_properties_tooltip(Operator):
 
 
 
+class UI_OT_experimentail(Operator):
+    bl_idname = "edit_breakdown.experimentail"
+    bl_label = "Group by: Character"
+    bl_description = "Experimentail"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        view.group_by_character = not view.group_by_character
+        return {'FINISHED'}
+
+
+
 # UI ##############################################################################################
 
-def draw_sequencer_header_extension(self, context):
+def draw_sequencer_header_extension_left(self, context):
+    if not view.is_thumbnail_view():
+        return
+    layout = self.layout
+    layout.operator("edit_breakdown.experimentail",
+                    text="Group by: Character" if view.group_by_character else "Group by: None",
+                    icon='EXPERIMENTAL' if view.group_by_character else 'GROUP_VERTEX')
+
+
+def draw_sequencer_header_extension_right(self, context):
     if not view.is_thumbnail_view():
         return
     layout = self.layout
@@ -566,6 +591,7 @@ classes = (
     SEQUENCER_OT_copy_custom_shot_props,
     SEQUENCER_OT_paste_custom_shot_props,
     UI_OT_shot_properties_tooltip,
+    UI_OT_experimentail,
 )
 
 
@@ -574,12 +600,14 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.SEQUENCER_HT_header.append(draw_sequencer_header_extension)
+    bpy.types.SEQUENCER_HT_header.prepend(draw_sequencer_header_extension_left)
+    bpy.types.SEQUENCER_HT_header.append(draw_sequencer_header_extension_right)
 
 
 def unregister():
 
-    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension)
+    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_right)
+    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_left)
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
