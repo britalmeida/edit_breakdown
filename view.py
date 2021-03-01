@@ -54,8 +54,8 @@ active_selected_thumbnail = None
 
 thumbnail_draw_region = (0, 0, 0, 0) # Rectangle inside a Blender region where the thumbnails draw
 
-group_by_character = True
-group_by_character_prev = True
+group_by_character = False
+group_by_character_prev = False
 
 class ThumbnailGroup:
 
@@ -174,7 +174,7 @@ def fit_thumbnails_in_grid():
     log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
     # Get the available size, discounting white space size.
-    total_spacing = (150, 150) 
+    total_spacing = (150, 150)
     min_margin = 40 # Arbitrary 20px minimum for the top,bottom,left and right margins
     available_w = total_available_w - total_spacing[0]
     available_h = total_available_h - total_spacing[1]
@@ -267,8 +267,8 @@ def fit_thumbnails_in_group():
     num_images = len(thumbnail_images)
 
     # Find the property definition.
-    prop_to_group_by = 'cp_4a6872e3' # Character
-    #prop_to_group_by = 'cp_14c9110f' # Sequence
+    # prop_to_group_by = 'cp_4a6872e3' # Character
+    prop_to_group_by = 'cp_8c8ff71b'  # Sequence
 
     try:
         #shot_cls = data.SEQUENCER_EditBreakdown_Shot
