@@ -54,8 +54,8 @@ active_selected_thumbnail = None
 
 thumbnail_draw_region = (0, 0, 0, 0) # Rectangle inside a Blender region where the thumbnails draw
 
-group_by_character = False
-group_by_character_prev = False
+group_by_sequence = False
+group_by_sequence_prev = False
 
 class ThumbnailGroup:
 
@@ -144,10 +144,9 @@ def fit_thumbnails_in_region():
 
     log.debug("------Fit Images-------------------");
 
-    if group_by_character:
+    if group_by_sequence:
         fit_thumbnails_in_group()
     else:
-        del thumbnail_images[len(shots):-1] # Delete extra thumbnails added by grouping.
         fit_thumbnails_in_grid()
 
 
@@ -267,8 +266,8 @@ def fit_thumbnails_in_group():
     num_images = len(thumbnail_images)
 
     # Find the property definition.
-    # prop_to_group_by = 'cp_4a6872e3' # Character
-    prop_to_group_by = 'cp_8c8ff71b'  # Sequence
+    #prop_to_group_by = 'cp_8c8ff71b'  # Sequence - fsiddi's file
+    prop_to_group_by = 'cp_14c9110f'  # Sequence - brita's file
 
     try:
         #shot_cls = data.SEQUENCER_EditBreakdown_Shot
@@ -279,17 +278,16 @@ def fit_thumbnails_in_group():
     user_configured_props = scene.edit_breakdown.shot_custom_props
     prop_config = next((p for p in user_configured_props if p.identifier == prop_to_group_by), None)
 
-    del thumbnail_images[len(shots):-1] # Delete extra thumbnails added by grouping.
+    if prop_config.data_type != 'ENUM_VAL':
+        return
+
     thumbnail_groups.clear()
 
     # Create the thumbnail groups
-    if prop_rna.type == 'ENUM':
-        for i, item in enumerate(prop_rna.enum_items):
-            group = ThumbnailGroup()
-            group.name = item.name
-            thumbnail_groups.append(group)
-    else:
-        return
+    for i, item in enumerate(prop_rna.enum_items):
+        group = ThumbnailGroup()
+        group.name = item.name
+        thumbnail_groups.append(group)
 
     if prop_config.data_type == 'ENUM_FLAG':
         unassigned_group = ThumbnailGroup()
@@ -299,36 +297,11 @@ def fit_thumbnails_in_group():
     # Assign shots to groups
     for shot_idx, shot in enumerate(shots):
         value = shot.get_prop_value(prop_to_group_by)
-
-        if prop_config.data_type == 'ENUM_FLAG':
-            if value == 0:
-                unassigned_group.shot_ids.append(shot_idx)
-                thumbnail_images[shot_idx].group_idx = len(thumbnail_groups) - 1
-                thumbnail_images[shot_idx].pos_in_group = len(unassigned_group.shot_ids) - 1
-            else:
-                usage_count = 0
-                for enum_idx, item in enumerate(prop_rna.enum_items):
-                    if (value & int(item.identifier)) != 0:
-                        thumbnail_groups[enum_idx].shot_ids.append(shot_idx)
-
-                        img = thumbnail_images[shot_idx]
-                        usage_count += 1
-                        if usage_count > 1:
-                            new_img = ThumbnailImage()
-                            new_img.name = str(thumbnail_images[shot_idx].name) + " (dup)"
-                            new_img.id_image = thumbnail_images[shot_idx].id_image
-                            thumbnail_images.append(new_img)
-                            img = new_img
-
-                        img.group_idx = enum_idx
-                        img.pos_in_group = len(thumbnail_groups[enum_idx].shot_ids) - 1
-
-        elif prop_config.data_type == 'ENUM_VAL':
-            value = int(shot.get(prop_to_group_by, 0))
-            active_enum_item = value
-            thumbnail_groups[active_enum_item].shot_ids.append(shot_idx)
-            thumbnail_images[shot_idx].group_idx = active_enum_item
-            thumbnail_images[shot_idx].pos_in_group = len(thumbnail_groups[active_enum_item].shot_ids) - 1
+        value = int(shot.get(prop_to_group_by, 0))
+        active_enum_item = value
+        thumbnail_groups[active_enum_item].shot_ids.append(shot_idx)
+        thumbnail_images[shot_idx].group_idx = active_enum_item
+        thumbnail_images[shot_idx].pos_in_group = len(thumbnail_groups[active_enum_item].shot_ids) - 1
 
     print(f"Assigned shots to {len(thumbnail_groups)} groups")
     for i, group in enumerate(thumbnail_groups):
@@ -506,16 +479,16 @@ def draw_edit_thumbnails():
         fit_thumbnails_in_region()
 
     # Recalculate thumbnail positions if the grouping setting changes
-    global group_by_character_prev
-    if group_by_character_prev != group_by_character:
-        group_by_character_prev = group_by_character
+    global group_by_sequence_prev
+    if group_by_sequence_prev != group_by_sequence:
+        group_by_sequence_prev = group_by_sequence
         fit_thumbnails_in_region()
 
     # If the resulting layout makes the images too small, skip rendering.
     if thumbnail_size[0] <= 5 or thumbnail_size[1] <= 5:
         return
 
-    if group_by_character:
+    if group_by_sequence:
         font_id = 0 # Default font.
         blf.size(font_id, 12, 72)
         for group in thumbnail_groups:

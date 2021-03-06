@@ -555,7 +555,7 @@ class UI_OT_experimentail(Operator):
         return True
 
     def execute(self, context):
-        view.group_by_character = not view.group_by_character
+        view.group_by_sequence = not view.group_by_sequence
         return {'FINISHED'}
 
 
@@ -567,8 +567,8 @@ def draw_sequencer_header_extension_left(self, context):
         return
     layout = self.layout
     layout.operator("edit_breakdown.experimentail",
-                    text="Group by: Character" if view.group_by_character else "Group by: None",
-                    icon='EXPERIMENTAL' if view.group_by_character else 'GROUP_VERTEX')
+                    text="Group by: Sequence" if view.group_by_sequence else "Group by: None",
+                    icon='EXPERIMENTAL' if view.group_by_sequence else 'GROUP_VERTEX')
 
 
 def draw_sequencer_header_extension_right(self, context):
