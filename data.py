@@ -18,7 +18,10 @@
 
 # <pep8 compliant>
 
+import hashlib
 import logging
+import pathlib
+import sys
 
 import bpy
 from bpy.app.handlers import persistent
@@ -82,6 +85,24 @@ def draw_stat_label(layout: bpy.types.UILayout, label: str, value: str):
     split.label(text=label)
     split.alignment = 'LEFT'
     split.label(text=value)
+
+
+def get_datadir() -> pathlib.Path:
+    """Returns a Path where persistent application data can be stored.
+
+    # linux: ~/.local/share
+    # macOS: ~/Library/Application Support
+    # windows: C:/Users/<USER>/AppData/Roaming
+    """
+
+    home = pathlib.Path.home()
+
+    if sys.platform == "win32":
+        return home / "AppData/Roaming"
+    elif sys.platform == "linux":
+        return home / ".local/share"
+    elif sys.platform == "darwin":
+        return home / "Library/Application Support"
 
 
 # Data ############################################################################################
@@ -329,11 +350,25 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
     bl_idname = "edit_breakdown"
 
+    def get_thumbnails_dir(self) -> str:
+        """Generate a path based on get_datadir and the current file name.
+
+        The path is constructed by combining the OS application data dir,
+        "blender-edit-breakdown" and a hashed version of the filepath.
+
+        Note: If a file is moved, the thumbnails will need to be recomputed.
+        """
+        hashed_filename = hashlib.md5(bpy.data.filepath.encode()).hexdigest()
+        storage_dir = get_datadir() / 'blender-edit-breakdown' / hashed_filename
+        storage_dir.mkdir(parents=True, exist_ok=True)
+        return str(storage_dir)
+
     edit_shots_folder: StringProperty(
         name="Edit Shots",
         description="Folder with image thumbnails for each shot",
         default="",
         subtype="FILE_PATH",
+        get=get_thumbnails_dir,
     )
 
     def draw(self, context):
