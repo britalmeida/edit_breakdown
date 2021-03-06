@@ -32,38 +32,40 @@ from . import draw_utils
 log = logging.getLogger(__name__)
 
 
-
 # Drawing Thumbnail Images ########################################################################
+
 
 class ThumbnailImage:
     """Displayed thumbnail data"""
 
     def __init__(self):
-        self.id_image = None # A Blender ID Image, which can be rendered by bgl.
-        self.pos = (0, 0) # Position in px where the image should be displayed within a region.
+        self.id_image = None  # A Blender ID Image, which can be rendered by bgl.
+        self.pos = (0, 0)  # Position in px where the image should be displayed within a region.
         self.name = ""
         self.shot_idx = -1
         self.group_idx = -1
         self.pos_in_group = -1
 
-thumbnail_images = [] # All the loaded thumbnails for an edit.
-thumbnail_size = (0, 0) # The size in px at which the thumbnails should be displayed.
+
+thumbnail_images = []  # All the loaded thumbnails for an edit.
+thumbnail_size = (0, 0)  # The size in px at which the thumbnails should be displayed.
 
 hovered_thumbnail = None
 active_selected_thumbnail = None
 
-thumbnail_draw_region = (0, 0, 0, 0) # Rectangle inside a Blender region where the thumbnails draw
+thumbnail_draw_region = (0, 0, 0, 0)  # Rectangle inside a Blender region where the thumbnails draw
 
 group_by_scene = False
 group_by_scene_prev = False
 
-class ThumbnailGroup:
 
+class ThumbnailGroup:
     def __init__(self):
         self.name = ""
         self.pos = (0, 0)
         self.shot_ids = []
         self.shot_rows = 0
+
 
 thumbnail_groups = []
 
@@ -75,12 +77,12 @@ def calculate_thumbnail_draw_region():
     total_available_w = region.width
     total_available_h = region.height
 
-    start_w = 0 # If the tools side panel is open, the thumbnails must be shifted to the right
+    start_w = 0  # If the tools side panel is open, the thumbnails must be shifted to the right
 
     # If the header and side panels render on top of the region, discount their size.
     # The thumbnails should not be occluded by the UI, even if set to transparent.
     system_prefs = bpy.context.preferences.system
-    transparent_regions = False #system_prefs.use_region_overlap
+    transparent_regions = False  # system_prefs.use_region_overlap
     if transparent_regions:
         area = bpy.context.area
         for r in area.regions:
@@ -105,7 +107,8 @@ def load_edit_thumbnails():
     try:
         for filename in os.listdir(folder_name):
             img = ThumbnailImage()
-            img.id_image = load_image(filename,
+            img.id_image = load_image(
+                filename,
                 dirname=folder_name,
                 place_holder=False,
                 recursive=False,
@@ -114,13 +117,13 @@ def load_edit_thumbnails():
                 verbose=False,
                 relpath=None,
                 check_existing=True,
-                force_reload=False)
+                force_reload=False,
+            )
             thumbnail_images.append(img)
             img.name = int(filename.split('.')[0])
     except FileNotFoundError:
         # self.report({'ERROR'}, # Need an operator
-        log.warning(
-            f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
+        log.warning(f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
 
     thumbnail_images.sort(key=lambda x: x.name, reverse=False)
 
@@ -142,7 +145,7 @@ def fit_thumbnails_in_region():
     if not shots:
         return
 
-    log.debug("------Fit Images-------------------");
+    log.debug("------Fit Images-------------------")
 
     if group_by_scene:
         fit_thumbnails_in_group()
@@ -174,7 +177,7 @@ def fit_thumbnails_in_grid():
 
     # Get the available size, discounting white space size.
     total_spacing = (150, 150)
-    min_margin = 40 # Arbitrary 20px minimum for the top,bottom,left and right margins
+    min_margin = 40  # Arbitrary 20px minimum for the top,bottom,left and right margins
     available_w = total_available_w - total_spacing[0]
     available_h = total_available_h - total_spacing[1]
     max_thumb_size = (total_available_w - min_margin, total_available_h - min_margin)
@@ -194,9 +197,12 @@ def fit_thumbnails_in_grid():
         thumbnail_size = (0, 0)
         return
     scale_factor = math.sqrt(thumbnail_area / (original_image_w * original_image_h))
-    log.debug(f"Scale factor: {scale_factor:.3f}");
-    thumbnail_size = (original_image_w * scale_factor,
-                      original_image_h * scale_factor)
+    log.debug(f"Scale factor: {scale_factor:.3f}")
+
+    thumbnail_size = (
+        original_image_w * scale_factor,
+        original_image_h * scale_factor,
+    )
 
     num_images_per_row = math.ceil(available_w / thumbnail_size[0])
     num_images_per_col = math.ceil(num_images / num_images_per_row)
@@ -211,10 +217,12 @@ def fit_thumbnails_in_grid():
         scale_factor = max_thumb_size[0] / (original_image_w * num_images_per_row)
     if original_image_h * scale_factor * num_images_per_col > max_thumb_size[1]:
         scale_factor = max_thumb_size[1] / (original_image_h * num_images_per_col)
-    log.debug(f"Reduced scale factor: {scale_factor:.3f}");
+    log.debug(f"Reduced scale factor: {scale_factor:.3f}")
 
-    thumbnail_size = (original_image_w * scale_factor,
-                      original_image_h * scale_factor)
+    thumbnail_size = (
+        original_image_w * scale_factor,
+        original_image_h * scale_factor,
+    )
 
     # Get the remaining space not occupied by thumbnails and split it into margins
     # and spacing between the thumbnails.
@@ -247,7 +255,9 @@ def fit_thumbnails_in_grid():
     # Set the position of each thumbnail
     start_pos_x = start_w + margins[0]
     start_pos_y = total_available_h - thumbnail_size[1] - margins[1]
-    last_start_pos_x = start_w + math.ceil(margins[0] + (num_images_per_row - 1)* (thumbnail_size[0] + spacing[0]))
+    last_start_pos_x = start_w + math.ceil(
+        margins[0] + (num_images_per_row - 1) * (thumbnail_size[0] + spacing[0])
+    )
 
     for img in thumbnail_images:
         img.pos = (start_pos_x, start_pos_y)
@@ -266,12 +276,12 @@ def fit_thumbnails_in_group():
     num_images = len(thumbnail_images)
 
     # Find the property definition.
-    #prop_to_group_by = 'cp_8c8ff71b'  # Sequence - fsiddi's file
-    prop_to_group_by = 'cp_14c9110f'  # Sequence - brita's file
+    prop_to_group_by = 'cp_8c8ff71b'  # Sequence - fsiddi's file
+    # prop_to_group_by = 'cp_14c9110f'  # Sequence - brita's file
 
     try:
-        #shot_cls = data.SEQUENCER_EditBreakdown_Shot
-        #prop_rna = shot_cls.bl_rna.properties[prop_to_group_by]
+        # shot_cls = data.SEQUENCER_EditBreakdown_Shot
+        # prop_rna = shot_cls.bl_rna.properties[prop_to_group_by]
         prop_rna = shots[0].rna_type.properties[prop_to_group_by]
     except KeyError:
         return
@@ -301,14 +311,15 @@ def fit_thumbnails_in_group():
         active_enum_item = value
         thumbnail_groups[active_enum_item].shot_ids.append(shot_idx)
         thumbnail_images[shot_idx].group_idx = active_enum_item
-        thumbnail_images[shot_idx].pos_in_group = len(thumbnail_groups[active_enum_item].shot_ids) - 1
+        thumbnail_images[shot_idx].pos_in_group = (
+            len(thumbnail_groups[active_enum_item].shot_ids) - 1
+        )
 
     print(f"Assigned shots to {len(thumbnail_groups)} groups")
     for i, group in enumerate(thumbnail_groups):
         print(f"{i}: {group.name}, {len(group.shot_ids)}")
 
     # Determine positions based on numbers
-
 
     global thumbnail_size
 
@@ -321,12 +332,14 @@ def fit_thumbnails_in_group():
 
     # Get the available size, discounting white space size.
     group_titles_height = 22
-    min_margin = 40 # Arbitrary 20px minimum for the top,bottom,left and right margins.
+    min_margin = 40  # Arbitrary 20px minimum for the top,bottom,left and right margins.
     total_spacing = (150, 40)
     available_w = total_available_w - total_spacing[0]
     available_h = total_available_h - total_spacing[1] - group_titles_height * len(thumbnail_groups)
-    max_thumb_size = (total_available_w - min_margin,
-                      total_available_h - min_margin)
+    max_thumb_size = (
+        total_available_w - min_margin,
+        total_available_h - min_margin,
+    )
 
     # Get the original size and aspect ratio of the images.
     # Assume all images in the edit have the same aspect ratio.
@@ -343,9 +356,11 @@ def fit_thumbnails_in_group():
         thumbnail_size = (0, 0)
         return
     scale_factor = math.sqrt(thumbnail_area / (original_image_w * original_image_h))
-    log.debug(f"Scale factor: {scale_factor:.3f}");
-    thumbnail_size = (original_image_w * scale_factor,
-                      original_image_h * scale_factor)
+    log.debug(f"Scale factor: {scale_factor:.3f}")
+    thumbnail_size = (
+        original_image_w * scale_factor,
+        original_image_h * scale_factor,
+    )
 
     num_images_per_row = math.ceil(available_w / thumbnail_size[0])
     num_images_per_col = math.ceil(num_images / num_images_per_row)
@@ -358,9 +373,12 @@ def fit_thumbnails_in_group():
         print(f"{group.name}, rows: {rows}")
         group.shot_rows = rows
         num_images_per_col += rows
-    print(f"num_images_per_col {num_images_per_col} space {num_images_per_col * thumbnail_size[1]} > available space {available_h} ? ")
+    print(
+        f"num_images_per_col {num_images_per_col} space "
+        f"{num_images_per_col * thumbnail_size[1]} > available space {available_h} ? "
+    )
 
-    l =0
+    l = 0
     while num_images_per_col * thumbnail_size[1] > available_h and l < 10:
         l += 1
         num_images_per_row += 1
@@ -373,7 +391,10 @@ def fit_thumbnails_in_group():
             num_images_per_col += rows
 
         print(f"[row/col] {num_images_per_row} {num_images_per_col} ? ")
-        print(f"num_images_per_col {num_images_per_col} space {num_images_per_col * thumbnail_size[1]} > available space {available_h} ? ")
+        print(
+            f"num_images_per_col {num_images_per_col} space "
+            f"{num_images_per_col * thumbnail_size[1]} > available space {available_h} ? "
+        )
 
     log.debug(f"Thumbnail width  {thumbnail_size[0]:.3f}px, # per row: {num_images_per_row:.3f}")
     log.debug(f"Thumbnail height {thumbnail_size[1]:.3f}px, # per col: {num_images_per_col:.3f}")
@@ -384,12 +405,14 @@ def fit_thumbnails_in_group():
     # In that case, reduce the thumbnail size further.
     if original_image_w * scale_factor * num_images_per_row > max_thumb_size[0]:
         scale_factor = max_thumb_size[0] / (original_image_w * num_images_per_row)
-    #if original_image_h * scale_factor * num_images_per_col > max_thumb_size[1]:
+    # if original_image_h * scale_factor * num_images_per_col > max_thumb_size[1]:
     #    scale_factor = max_thumb_size[1] / (original_image_h * num_images_per_col)
-    log.debug(f"Reduced scale factor: {scale_factor:.3f}");
+    log.debug(f"Reduced scale factor: {scale_factor:.3f}")
 
-    thumbnail_size = (original_image_w * scale_factor,
-                      original_image_h * scale_factor)
+    thumbnail_size = (
+        original_image_w * scale_factor,
+        original_image_h * scale_factor,
+    )
 
     # Get the remaining space not occupied by thumbnails and split it into margins
     # and spacing between the thumbnails.
@@ -414,7 +437,11 @@ def fit_thumbnails_in_group():
     available_space = total_available_w - thumbnail_size[0] * num_images_per_row
     space_w = calculate_spacing(total_available_w, available_space, num_images_per_row)
     log.debug(f"Y")
-    available_space = total_available_h - thumbnail_size[1] * num_images_per_col - group_titles_height * len(thumbnail_groups)
+    available_space = (
+        total_available_h
+        - thumbnail_size[1] * num_images_per_col
+        - group_titles_height * len(thumbnail_groups)
+    )
     space_h = calculate_spacing(total_available_h, available_space, num_images_per_col)
 
     margins = (space_w[0], space_h[0])
@@ -425,7 +452,9 @@ def fit_thumbnails_in_group():
     start_pos_y_thumb = thumbnail_size[1] + 6
     thumbnail_step_x = thumbnail_size[0] + spacing[0]
     thumbnail_step_y = thumbnail_size[1] + spacing[1]
-    last_start_pos_x = start_w + math.ceil(margins[0] + (num_images_per_row - 1)* (thumbnail_size[0] + spacing[0]))
+    last_start_pos_x = start_w + math.ceil(
+        margins[0] + (num_images_per_row - 1) * (thumbnail_size[0] + spacing[0])
+    )
 
     # Set the position of each group title
     for group_idx, group in enumerate(thumbnail_groups):
@@ -442,10 +471,12 @@ def fit_thumbnails_in_group():
         row = int(img.pos_in_group / num_images_per_row)
         col = img.pos_in_group % num_images_per_row
         group_y = thumbnail_groups[img.group_idx].pos[1]
-        img.pos = (start_pos_x + thumbnail_step_x * col,
-                   group_y - start_pos_y_thumb - thumbnail_step_y * row)
-        #print(f"{img.name} : [group/pos]({img.group_idx},{img.pos_in_group}) [row/col]({row},{col}) pos({img.pos[0]:.2f},{img.pos[1]:.2f})")
-
+        img.pos = (
+            start_pos_x + thumbnail_step_x * col,
+            group_y - start_pos_y_thumb - thumbnail_step_y * row,
+        )
+        # print(f"{img.name} : [group/pos]({img.group_idx},{img.pos_in_group})
+        # [row/col]({row},{col}) pos({img.pos[0]:.2f},{img.pos[1]:.2f})")
 
 
 def is_thumbnail_view():
@@ -489,7 +520,7 @@ def draw_edit_thumbnails():
         return
 
     if group_by_scene:
-        font_id = 0 # Default font.
+        font_id = 0  # Default font.
         blf.size(font_id, 12, 72)
         for group in thumbnail_groups:
             blf.position(font_id, group.pos[0], group.pos[1], 0)
@@ -548,7 +579,8 @@ def draw_tool_active_tag():
             # Get the active enum item as an integer value
             if prop_config.data_type in ['ENUM_FLAG', 'ENUM_VAL']:
                 try:
-                    active_enum_item = int(active_tool.operator_properties("edit_breakdown.thumbnail_tag").tag_enum_option)
+                    operator_props = active_tool.operator_properties("edit_breakdown.thumbnail_tag")
+                    active_enum_item = int(operator_props.tag_enum_option)
                     # Convert power of 2 value to a sequential index
                     if prop_config.data_type == 'ENUM_VAL':
                         active_enum_item = active_enum_item.bit_length() - 1
@@ -579,10 +611,11 @@ def draw_overlay():
 
     if active_selected_thumbnail:
         size = (thumbnail_size[0] + 2, thumbnail_size[1] + 2)
-        pos = (active_selected_thumbnail.pos[0] - 1,
-               active_selected_thumbnail.pos[1] - 1)
+        pos = (
+            active_selected_thumbnail.pos[0] - 1,
+            active_selected_thumbnail.pos[1] - 1,
+        )
         draw_utils.draw_selected_frame(pos, size)
-
 
 
 # Add-on Registration #############################################################################
@@ -596,7 +629,7 @@ def register():
     draw_handles.append(space.draw_handler_add(draw_background, (), 'PREVIEW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'PREVIEW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_overlay, (), 'PREVIEW', 'POST_PIXEL'))
-    #draw_handles.append(space.draw_handler_add(draw_text, (), 'PREVIEW', 'POST_PIXEL'))
+    # draw_handles.append(space.draw_handler_add(draw_text, (), 'PREVIEW', 'POST_PIXEL'))
 
 
 def unregister():

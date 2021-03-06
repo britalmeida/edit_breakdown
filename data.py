@@ -45,6 +45,7 @@ log = logging.getLogger(__name__)
 
 # Utilities #######################################################################################
 
+
 def timestamp_str(num_frames: int) -> str:
     """Returns an absolute frame or duration as a timestamp string"""
 
@@ -83,7 +84,6 @@ def draw_stat_label(layout: bpy.types.UILayout, label: str, value: str):
     split.label(text=value)
 
 
-
 # Data ############################################################################################
 
 custom_prop_data_types = [
@@ -94,28 +94,29 @@ custom_prop_data_types = [
     ("ENUM_VAL", "Single Choice", "One of a set of custom items (enum value)"),
 ]
 
+
 class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     """Definition of a user defined property for a shot."""
 
     identifier: StringProperty(
         name="Identifier",
-        description="Unique name with which Blender can identify this property. " \
-            "Does not change if the property is renamed",
+        description="Unique name with which Blender can identify this property. "
+        "Does not change if the property is renamed",
     )
     name: StringProperty(
         name="Name",
         description="Name to display in the UI. Can be renamed",
-        default="New property"
+        default="New property",
     )
     description: StringProperty(
         name="Description",
         description="Details on the meaning of the property",
-        default=""
+        default="",
     )
     data_type: StringProperty(
         name="Type",
         description="The type of data that this property holds",
-        default="BOOLEAN"
+        default="BOOLEAN",
     )
     range_min: IntProperty(
         name="Min",
@@ -130,14 +131,16 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     enum_items: StringProperty(
         name="Items",
         description="Possible values for the property if it is an enum. Comma separated list of options",
-        default="Option 1, Option 2"
+        default="Option 1, Option 2",
     )
     color: FloatVectorProperty(
         name="Color",
         description="Associated color to be used by the Tag tool",
-        subtype = "COLOR_GAMMA",
-        size = 4, min = 0.0, max = 1.0,
-        default = (0.4, 0.6, 0.75, 1.0) # Some blue
+        subtype="COLOR_GAMMA",
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(0.4, 0.6, 0.75, 1.0),  # Some blue
     )
 
 
@@ -169,7 +172,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     def duration_seconds(self):
         """The duration of this shot, in seconds"""
         fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
-        return round(self.frame_count/fps, 1)
+        return round(self.frame_count / fps, 1)
 
     def count_bits_in_flag(self, prop_id):
         """The total number of options chosen in a multiple choice property."""
@@ -186,7 +189,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     def has_prop(cls, prop_id: str) -> bool:
         """True if this class has a registered property under the identifier 'prop_id'."""
         properties = {prop.identifier for prop in cls.bl_rna.properties if prop.is_runtime}
-        return (prop_id in properties)
+        return prop_id in properties
 
     def set_prop_value(self, prop_id: str, value) -> bool:
         """Set the value of a property."""
@@ -202,7 +205,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         prop_rna = self.rna_type.properties[prop_id]
         is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
         if is_enum_flag:
-            default_value = 0  #prop_rna.default_flag is a set. TODO convert set to int.
+            default_value = 0  # prop_rna.default_flag is a set. TODO convert set to int.
         else:
             default_value = prop_rna.default
         return int(self.get(prop_id, default_value))
@@ -215,8 +218,11 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_custom_properties(cls):
         """Get a list of the user defined properties for Shots"""
-        custom_rna_properties = {prop for prop in cls.bl_rna.properties if (prop.is_runtime
-            and prop.identifier not in cls.get_hardcoded_properties())}
+        custom_rna_properties = {
+            prop
+            for prop in cls.bl_rna.properties
+            if (prop.is_runtime and prop.identifier not in cls.get_hardcoded_properties())
+        }
         return sorted(custom_rna_properties, key=lambda x: x.name, reverse=False)
 
     @classmethod
@@ -239,7 +245,12 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     def get_csv_export_values(self):
         """Returns a list of values for the CSV exported properties"""
-        values = [self.name, self.frame_start, timestamp_str(self.frame_start), self.duration_seconds]
+        values = [
+            self.name,
+            self.frame_start,
+            timestamp_str(self.frame_start),
+            self.duration_seconds,
+        ]
         for prop in self.get_custom_properties():
             if prop.type == 'ENUM' and prop.is_enum_flag:
                 # Add count
@@ -289,10 +300,10 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         description="Set of shots that form the edit",
     )
 
-    selected_shot_idx : IntProperty(
+    selected_shot_idx: IntProperty(
         name="Selected Shot",
         description="The active selected shot (last selected, if any).",
-        default=-1
+        default=-1,
     )
 
     shot_custom_props: CollectionProperty(
@@ -312,7 +323,6 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         return last_shot.frame_start + last_shot.frame_count - first_shot.frame_start
 
 
-
 # Settings ########################################################################################
 
 
@@ -323,7 +333,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         name="Edit Shots",
         description="Folder with image thumbnails for each shot",
         default="",
-        subtype="FILE_PATH"
+        subtype="FILE_PATH",
     )
 
     def draw(self, context):
@@ -353,7 +363,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
             box = col_props.box()
             row = box.row()
-            row.enabled = (prop.data_type in (t[0] for t in custom_prop_data_types))
+            row.enabled = prop.data_type in (t[0] for t in custom_prop_data_types)
 
             split = row.split(factor=0.1)
             row = split.row(align=True)
@@ -376,15 +386,16 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
             row = split.row(align=False)
             edit_op = row.operator("edit_breakdown.edit_custom_shot_prop", text="Edit")
-            edit_op.prop_id=prop.identifier
-            edit_op.name=prop.name
-            edit_op.description=prop.description
-            edit_op.data_type=prop.data_type
-            edit_op.range_min=prop.range_min
-            edit_op.range_max=prop.range_max
-            edit_op.enum_items=prop.enum_items
-            row.operator("edit_breakdown.del_custom_shot_prop",
-                        text="Delete").prop_id=prop.identifier
+            edit_op.prop_id = prop.identifier
+            edit_op.name = prop.name
+            edit_op.description = prop.description
+            edit_op.data_type = prop.data_type
+            edit_op.range_min = prop.range_min
+            edit_op.range_max = prop.range_max
+            edit_op.enum_items = prop.enum_items
+            row.operator(
+                "edit_breakdown.del_custom_shot_prop", text="Delete"
+            ).prop_id = prop.identifier
 
             if prop.data_type == 'INT':
                 row = box.row()
@@ -431,16 +442,17 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         # UI list
         num_rows = 4 if len(edit_breakdown.scenes) > 0 else 1
         row = col.row()
+        # fmt: off
         row.template_list(
             "SEQUENCER_UL_Scenes", "",  # Type and unique id.
             edit_breakdown, "scenes",  # Pointer to the CollectionProperty.
             edit_breakdown, "active_scene_idx",  # Pointer to the active identifier.
-            rows=num_rows
+            rows=num_rows,
         )
+        # fmt: on
         but_col = row.column(align=True)
         but_col.operator("edit_breakdown.add_scene", icon='ADD', text="")
         but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
-
 
 
 # UI ##############################################################################################
@@ -510,21 +522,22 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
             prop_rna = selected_shot.bl_rna.properties[prop.identifier]
             is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
             if is_enum_flag:
-                num_chosen_options, total_options = selected_shot.count_bits_in_flag(prop.identifier)
-                col.label(text=f"{prop.name} Count: {num_chosen_options} of {total_options}")
+                num_chosen_options, num_options = selected_shot.count_bits_in_flag(prop.identifier)
+                col.label(text=f"{prop.name} Count: {num_chosen_options} of {num_options}")
 
 
 class SEQUENCER_UL_Scenes(UIList):
     """UI List for the scenes in the edit."""
+
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         sel_set = item
         layout.prop(item, "name", text="", icon='EXPERIMENTAL', emboss=False)
-        #if self.layout_type in ('DEFAULT', 'COMPACT'):
+        # if self.layout_type in ('DEFAULT', 'COMPACT'):
         #    layout.prop(item, "is_selected", text="")
 
 
-
 # Property Registration On File Load ##############################################################
+
 
 def register_custom_prop(data_cls, prop):
     extra_prop_config = ""
@@ -546,7 +559,7 @@ def register_custom_prop(data_cls, prop):
             if item_human_name:
                 item_code_name = str(idx)
                 enum_items.append((item_code_name, item_human_name, ""))
-                idx *= 2 # Powers of 2, for use in bit flags.
+                idx *= 2  # Powers of 2, for use in bit flags.
         extra_prop_config = f"items={enum_items},"
 
         if prop.data_type == 'ENUM_FLAG':
@@ -557,14 +570,17 @@ def register_custom_prop(data_cls, prop):
         # receives a string instead of assignment.
         # prop.identifier is fully controlled by code, not user input, and therefore
         # there should be no danger of code injection.
-        registration_expr = f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', description='{prop.description}', {extra_prop_config})"
+        registration_expr = (
+            f"data_cls.{prop.identifier} = {prop_ctor}(name='{prop.name}', "
+            f"description='{prop.description}', {extra_prop_config})"
+        )
         log.debug(f"Registering custom property: {registration_expr}")
         exec(registration_expr)
 
 
 def unregister_custom_prop(data_cls, prop_identifier):
-        # Note: 'exec': is used because prop.identifier is data driven. See note above.
-        exec(f"del data_cls.{prop_identifier}")
+    # Note: 'exec': is used because prop.identifier is data driven. See note above.
+    exec(f"del data_cls.{prop_identifier}")
 
 
 @persistent
@@ -604,7 +620,6 @@ def unregister_custom_properties(scene):
 
     # Unregister custom sequence properties
     pass
-
 
 
 # Add-on Registration #############################################################################

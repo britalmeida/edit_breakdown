@@ -102,7 +102,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             shot.frame_count = last_frame - shot.frame_start
             last_frame = shot.frame_start
 
-
     @classmethod
     def poll(cls, context):
         return True
@@ -152,8 +151,9 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         # Ensure every marker has a shot
         for m in markers:
-            associated_shot = 'uuid' in m.keys() and \
-                              next((s for s in shots if m['uuid'] == s.timeline_marker), None)
+            associated_shot = 'uuid' in m.keys() and next(
+                (s for s in shots if m['uuid'] == s.timeline_marker), None
+            )
             if not associated_shot:
                 # Found a marker without associated shot? Create shot!
                 log.debug(f"Creating new shot for marker {m.name}")
@@ -182,7 +182,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 shots.remove(i)
 
         # Sort shots per frame number. (Insertion Sort)
-        for i in range(1, len(shots)):# Start at 1, because 0 is trivially sorted.
+        for i in range(1, len(shots)):  # Start at 1, because 0 is trivially sorted.
             value_being_sorted = shots[i].frame_start
             # Shuffle 'value_being_sorted' from right-to-left on the sorted part
             # of the array, until it reaches its place
@@ -287,7 +287,7 @@ class SEQUENCER_OT_del_scene(Operator):
 
         # Ensure the selected scene is within range.
         num_scenes = len(edit_scenes)
-        if (edit_breakdown.active_scene_idx > (num_scenes - 1) and num_scenes > 0):
+        if edit_breakdown.active_scene_idx > (num_scenes - 1) and num_scenes > 0:
             edit_breakdown.active_scene_idx = num_scenes - 1
 
         return {'FINISHED'}
@@ -343,8 +343,13 @@ class SEQUENCER_OT_del_custom_shot_prop(Operator):
 
         # Find the index of the custom property to remove
         try:
-            idx_to_remove = next((i for i, prop in enumerate(user_configured_props) \
-                                if prop.identifier == self.prop_id))
+            idx_to_remove = next(
+                (
+                    i
+                    for i, prop in enumerate(user_configured_props)
+                    if prop.identifier == self.prop_id
+                )
+            )
         except StopIteration:
             log.error("Tried to remove a custom shot property that does not exist")
             return {'CANCELLED'}
@@ -401,7 +406,6 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         description="Possible values for the property. Comma separated list of options",
     )
 
-
     @classmethod
     def poll(cls, context):
         return True
@@ -418,8 +422,10 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         # If 'prop_id' is not registered for shots, early out of any
         # potentially data changing operations.
         if not data.SEQUENCER_EditBreakdown_Shot.has_prop(self.prop_id):
-            col.label(icon='ERROR',
-                      text="Shots don't have this property registered. Try reloading the file.")
+            col.label(
+                icon='ERROR',
+                text="Shots don't have this property registered. Try reloading the file.",
+            )
             return
 
         def is_prop_already_used(shots, prop_id):
@@ -453,22 +459,22 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
         col = layout.column()
         # Additional configuration according to the data type
         if self.data_type == 'INT':
-            row=col.row()
+            row = col.row()
             row.prop(self, "range_min")
             row.prop(self, "range_max")
             min_used_val, max_used_val = get_prop_used_range(shots, self.prop_id)
             if is_used and (self.range_min > min_used_val or self.range_max < max_used_val):
-                col.label(icon='ERROR', # Actually the triangle warning icon
-                          text="There is existing data outside the new range. Values outside the range will be clamped.")
+                col.label(
+                    icon='ERROR',  # Actually the triangle warning icon
+                    text="There is existing data outside the new range. Values outside the range will be clamped.",
+                )
         elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
             col.prop(self, "enum_items")
-
 
     def invoke(self, context, event):
         """On user interaction, show a popup with the properties that only executes on 'OK'."""
         wm = context.window_manager
         return wm.invoke_props_dialog(self, width=450)
-
 
     def execute(self, context):
         """Called to finish this operator's action."""
@@ -523,7 +529,7 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
 class SEQUENCER_OT_copy_custom_shot_props(Operator):
     bl_idname = "edit_breakdown.copy_custom_shot_props"
     bl_label = "Copy Custom Properties Configuration"
-    bl_description = "Copy the configuration of custom properties for shots. Can be pasted in another file"
+    bl_description = "Copy the configuration of custom properties. Can be pasted in another file"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -597,7 +603,6 @@ class UI_OT_shot_properties_tooltip(Operator):
         col.label(text="Note: Custom properties are saved per file (not a user preference)")
 
 
-
 class UI_OT_experimentail(Operator):
     bl_idname = "edit_breakdown.experimentail"
     bl_label = "Group by: Character"
@@ -613,25 +618,26 @@ class UI_OT_experimentail(Operator):
         return {'FINISHED'}
 
 
-
 # UI ##############################################################################################
+
 
 def draw_sequencer_header_extension_left(self, context):
     if not view.is_thumbnail_view():
         return
     layout = self.layout
-    layout.operator("edit_breakdown.experimentail",
-                    text="Group by: Sequence" if view.group_by_scene else "Group by: None",
-                    icon='EXPERIMENTAL' if view.group_by_scene else 'GROUP_VERTEX')
+    layout.operator(
+        "edit_breakdown.experimentail",
+        text="Group by: Sequence" if view.group_by_scene else "Group by: None",
+        icon='EXPERIMENTAL' if view.group_by_scene else 'GROUP_VERTEX',
+    )
 
 
 def draw_sequencer_header_extension_right(self, context):
     if not view.is_thumbnail_view():
         return
     layout = self.layout
-    layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW') #FILE_REFRESH
+    layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW')  # FILE_REFRESH
     layout.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE')
-
 
 
 # Add-on Registration #############################################################################

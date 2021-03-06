@@ -37,7 +37,6 @@ theme_selected_object = bpy.context.preferences.themes['Default'].view_3d.object
 theme_active_object = bpy.context.preferences.themes['Default'].view_3d.object_active
 selection_color = (theme_active_object.r, theme_active_object.g, theme_active_object.b, 1.0)
 
-
 # Shaders and batches
 
 
@@ -46,22 +45,23 @@ rect_indices = ((0, 1, 2), (2, 1, 3))
 rect_coords = ((0, 0), (1, 0), (1, 1), (0, 1))
 
 ucolor_2d_shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-ucolor_2d_rect_batch = batch_for_shader(ucolor_2d_shader, 'TRI_FAN',
-    {"pos": rect_coords})
+ucolor_2d_rect_batch = batch_for_shader(ucolor_2d_shader, 'TRI_FAN', {"pos": rect_coords})
 
-ucolor_lines_rect_batch = batch_for_shader(ucolor_2d_shader, 'LINES',
-    {"pos": rect_coords}, indices=line_indices)
+ucolor_lines_rect_batch = batch_for_shader(
+    ucolor_2d_shader, 'LINES', {"pos": rect_coords}, indices=line_indices
+)
 
 image_2d_shader = gpu.shader.from_builtin('2D_IMAGE')
-image_2d_batch = batch_for_shader(image_2d_shader, 'TRI_FAN',
-    {"pos": rect_coords, "texCoord": rect_coords})
+image_2d_batch = batch_for_shader(
+    image_2d_shader, 'TRI_FAN', {"pos": rect_coords, "texCoord": rect_coords}
+)
 
 
 def draw_background(size):
     """Draw a solid rectangle with the background color with the given size"""
 
     with gpu.matrix.push_pop():
-        gpu.matrix.translate((0,0))
+        gpu.matrix.translate((0, 0))
         gpu.matrix.scale(size)
 
         ucolor_2d_shader.bind()
@@ -135,9 +135,10 @@ def draw_thumbnails(thumbnail_images, size):
 # Font ####################################################################
 
 font_info = {
-    "font_id": 0, # Default font.
+    "font_id": 0,  # Default font.
     "handler": None,
 }
+
 
 def draw_text(self, context):
     font_id = font_info["font_id"]

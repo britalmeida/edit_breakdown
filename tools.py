@@ -38,15 +38,19 @@ from . import data
 log = logging.getLogger(__name__)
 
 
-
 # Tools ###########################################################################################
+
 
 def get_thumbnail_under_mouse(mouse_x, mouse_y) -> view.ThumbnailImage:
     """Return the ThumbnailImage currently under the mouse. Possibly None."""
 
     for thumb in view.thumbnail_images:
-        if (mouse_x >= thumb.pos[0] and mouse_x <= thumb.pos[0] + view.thumbnail_size[0] and
-            mouse_y >= thumb.pos[1] and mouse_y <= thumb.pos[1] + view.thumbnail_size[1]):
+        if (
+            mouse_x >= thumb.pos[0]
+            and mouse_x <= thumb.pos[0] + view.thumbnail_size[0]
+            and mouse_y >= thumb.pos[1]
+            and mouse_y <= thumb.pos[1] + view.thumbnail_size[1]
+        ):
             return thumb
 
     return None
@@ -120,8 +124,9 @@ class SEQUENCER_OT_thumbnail_select(Operator):
 
         if event.type == 'MOUSEMOVE':
             # Determine the thumbnail that is currently under the mouse (if any).
-            view.hovered_thumbnail = get_thumbnail_under_mouse(event.mouse_region_x,
-                                                               event.mouse_region_y)
+            view.hovered_thumbnail = get_thumbnail_under_mouse(
+                event.mouse_region_x, event.mouse_region_y
+            )
         else:
             # Select.
 
@@ -129,10 +134,12 @@ class SEQUENCER_OT_thumbnail_select(Operator):
             # This can happen when clicking on transparent panels that overlap the window area.
             mouse_x = event.mouse_region_x
             mouse_y = event.mouse_region_y
-            if (mouse_x < view.thumbnail_draw_region[0] or
-                mouse_y < view.thumbnail_draw_region[1] or
-                mouse_x > view.thumbnail_draw_region[2] or
-                mouse_y > view.thumbnail_draw_region[3]):
+            if (
+                mouse_x < view.thumbnail_draw_region[0]
+                or mouse_y < view.thumbnail_draw_region[1]
+                or mouse_x > view.thumbnail_draw_region[2]
+                or mouse_y > view.thumbnail_draw_region[3]
+            ):
                 return {'FINISHED'}
 
             self.execute(context)
@@ -141,7 +148,6 @@ class SEQUENCER_OT_thumbnail_select(Operator):
         context.area.tag_redraw()
 
         return {'FINISHED'}
-
 
     def execute(self, context):
         """Mark the thumbnail under the mouse as selected."""
@@ -167,7 +173,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
     # of the identifier. This causes issues when deleting/adding custom props as the selected enum
     # item won't be stable. As a workaround, backup the enum value as a string and override the
     # enum prop's get/set to keep its current value in sync by identifier instead of by position.
-    tag_str : str = None  # Shadow copy of the current 'tag' enum value as a str.
+    tag_str: str = None  # Shadow copy of the current 'tag' enum value as a str.
     tag_enum_items = []
 
     def populate_enum_items_for_shot_custom_properties(self, context):
@@ -184,7 +190,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         SEQUENCER_OT_thumbnail_tag.tag_enum_items = enum_items
 
         return SEQUENCER_OT_thumbnail_tag.tag_enum_items
-
 
     def populate_enum_items_for_enum_property(self, context):
         """Generate an enum list with the available options for an enum property."""
@@ -238,7 +243,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         enum_item = SEQUENCER_OT_thumbnail_tag.tag_enum_items[value]
         SEQUENCER_OT_thumbnail_tag.tag_str = enum_item[0]
 
-
     def on_tag_update(self, context):
         """Callback when the current tag is changed"""
 
@@ -246,7 +250,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         prop_rna = shot_cls.bl_rna.properties[self.tag]
         is_enum = prop_rna.type == 'ENUM'
         self.tag_enum_option = "1"
-
 
     tag: EnumProperty(
         name="Tag",
@@ -267,12 +270,11 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         default=1,
     )
 
-
     def get_hovered_shot(self, context):
         """Get the shot represented by the thumbnail under the mouse, if any."""
 
         # Find the hovered thumbnail index in the edit breakdown shot data
-        hovered_thumbnail_idx =-1
+        hovered_thumbnail_idx = -1
         for i, thumb in enumerate(view.thumbnail_images):
             if thumb == view.hovered_thumbnail:
                 hovered_thumbnail_idx = i
@@ -284,7 +286,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         shots = context.scene.edit_breakdown.shots
         return shots[hovered_thumbnail_idx]
 
-
     @classmethod
     def poll(cls, context):
         return True
@@ -294,8 +295,9 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
         if event.type == 'MOUSEMOVE':
             # Determine the thumbnail that is currently under the mouse (if any).
-            view.hovered_thumbnail = get_thumbnail_under_mouse(event.mouse_region_x,
-                                                               event.mouse_region_y)
+            view.hovered_thumbnail = get_thumbnail_under_mouse(
+                event.mouse_region_x, event.mouse_region_y
+            )
         else:
             # Set a shot property to a predetermined or input value.
 
@@ -303,10 +305,12 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             # This can happen when clicking on transparent panels that overlap the window area.
             mouse_x = event.mouse_region_x
             mouse_y = event.mouse_region_y
-            if (mouse_x < view.thumbnail_draw_region[0] or
-                mouse_y < view.thumbnail_draw_region[1] or
-                mouse_x > view.thumbnail_draw_region[2] or
-                mouse_y > view.thumbnail_draw_region[3]):
+            if (
+                mouse_x < view.thumbnail_draw_region[0]
+                or mouse_y < view.thumbnail_draw_region[1]
+                or mouse_x > view.thumbnail_draw_region[2]
+                or mouse_y > view.thumbnail_draw_region[3]
+            ):
                 return {'FINISHED'}
 
             # Get the thumbnail under the mouse, if any.
@@ -335,32 +339,49 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                     else:
                         # Set to the currently chosen enum option or unset
                         enum_option_val = int(self.tag_enum_option).bit_length() - 1
-                        if (prev_value == enum_option_val):
+                        if prev_value == enum_option_val:
                             self.tag_value = -1
                         else:
                             self.tag_value = enum_option_val
 
             # Sanitize direct value assignment
-            elif event.type in {'NUMPAD_0', 'NUMPAD_1', 'NUMPAD_2', 'NUMPAD_3', 'NUMPAD_4',
-                                'NUMPAD_5', 'NUMPAD_6', 'NUMPAD_7', 'NUMPAD_8', 'NUMPAD_9', 'ONE',
-                                'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'}:
+            elif event.type in {
+                'NUMPAD_0',
+                'NUMPAD_1',
+                'NUMPAD_2',
+                'NUMPAD_3',
+                'NUMPAD_4',
+                'NUMPAD_5',
+                'NUMPAD_6',
+                'NUMPAD_7',
+                'NUMPAD_8',
+                'NUMPAD_9',
+                'ONE',
+                'TWO',
+                'THREE',
+                'FOUR',
+                'FIVE',
+                'SIX',
+                'SEVEN',
+                'EIGHT',
+                'NINE',
+            }:
 
                 if tag_rna.type == 'BOOLEAN':  # 0 or 1, not higher
                     self.tag_value = 0 if self.tag_value == 0 else 1
                 elif tag_rna.type == 'INT':  # Clamp to user-defined range
                     self.tag_value = max(tag_rna.hard_min, min(self.tag_value, tag_rna.hard_max))
-                elif tag_rna.type == 'ENUM': # Input of 0 or 1 should toggle active flag on/off
+                elif tag_rna.type == 'ENUM':  # Input of 0 or 1 should toggle active flag on/off
                     if tag_rna.is_enum_flag:
                         if self.tag_value == 0:
                             self.tag_value = prev_value & ~int(self.tag_enum_option)
-                        else: # 1 or higher is "turn on"
+                        else:  # 1 or higher is "turn on"
                             self.tag_value = prev_value | int(self.tag_enum_option)
                     else:
                         if self.tag_value == 0:
                             self.tag_value = -1
-                        else: # 1 or higher is "turn on"
+                        else:  # 1 or higher is "turn on"
                             self.tag_value = int(self.tag_enum_option).bit_length() - 1
-
 
             # Assign the new tag value
             self.execute(context)
@@ -369,7 +390,6 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         context.area.tag_redraw()
 
         return {'FINISHED'}
-
 
     def execute(self, context):
         """Set the tag to a certain value for the hovered shot."""
@@ -393,22 +413,10 @@ class ThumbnailSelectTool(WorkSpaceTool):
     bl_widget = None
     bl_keymap = (
         # Update mouse hover feedback
-        (
-            "edit_breakdown.thumbnail_select",
-            {"type": 'MOUSEMOVE', "value": 'ANY'},
-            None
-        ),
+        ("edit_breakdown.thumbnail_select", {"type": 'MOUSEMOVE', "value": 'ANY'}, None),
         # Execute selection
-        (
-            "edit_breakdown.thumbnail_select",
-            {"type": 'LEFTMOUSE', "value": 'PRESS'},
-            None
-        ),
-        (
-            "edit_breakdown.thumbnail_select",
-            {"type": 'RIGHTMOUSE', "value": 'PRESS'},
-            None
-        ),
+        ("edit_breakdown.thumbnail_select", {"type": 'LEFTMOUSE', "value": 'PRESS'}, None),
+        ("edit_breakdown.thumbnail_select", {"type": 'RIGHTMOUSE', "value": 'PRESS'}, None),
     )
 
 
@@ -419,128 +427,116 @@ class ThumbnailTagTool(WorkSpaceTool):
     bl_idname = "edit_breakdown.thumbnail_tag_tool"
     bl_label = "Thumbnail Tag"
     bl_description = "Tag shots with properties"
-    bl_icon = "brush.paint_texture.clone"# Stamp-like icon.
+    bl_icon = "brush.paint_texture.clone"  # Stamp-like icon.
     bl_widget = None
     bl_keymap = (
         # Update mouse hover feedback
-        (
-            "edit_breakdown.thumbnail_tag",
-            {"type": 'MOUSEMOVE', "value": 'ANY'},
-            None
-        ),
+        ("edit_breakdown.thumbnail_tag", {"type": 'MOUSEMOVE', "value": 'ANY'}, None),
         # Tag with pre-selected value
-        (
-            "edit_breakdown.thumbnail_tag",
-            {"type": 'LEFTMOUSE', "value": 'PRESS'},
-            None
-        ),
+        ("edit_breakdown.thumbnail_tag", {"type": 'LEFTMOUSE', "value": 'PRESS'}, None),
         # Tag with numeric value
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_0', "value": 'PRESS'},
-            {"properties": [("tag_value", 0)]}
+            {"properties": [("tag_value", 0)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_1', "value": 'PRESS'},
-            {"properties": [("tag_value", 1)]}
+            {"properties": [("tag_value", 1)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_2', "value": 'PRESS'},
-            {"properties": [("tag_value", 2)]}
+            {"properties": [("tag_value", 2)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_3', "value": 'PRESS'},
-            {"properties": [("tag_value", 3)]}
+            {"properties": [("tag_value", 3)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_4', "value": 'PRESS'},
-            {"properties": [("tag_value", 4)]}
+            {"properties": [("tag_value", 4)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_5', "value": 'PRESS'},
-            {"properties": [("tag_value", 5)]}
+            {"properties": [("tag_value", 5)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_6', "value": 'PRESS'},
-            {"properties": [("tag_value", 6)]}
+            {"properties": [("tag_value", 6)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_7', "value": 'PRESS'},
-            {"properties": [("tag_value", 7)]}
+            {"properties": [("tag_value", 7)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_8', "value": 'PRESS'},
-            {"properties": [("tag_value", 8)]}
+            {"properties": [("tag_value", 8)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NUMPAD_9', "value": 'PRESS'},
-            {"properties": [("tag_value", 9)]}
+            {"properties": [("tag_value", 9)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'ZERO', "value": 'PRESS'},
-            {"properties": [("tag_value", 0)]}
+            {"properties": [("tag_value", 0)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'ONE', "value": 'PRESS'},
-            {"properties": [("tag_value", 1)]}
+            {"properties": [("tag_value", 1)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'TWO', "value": 'PRESS'},
-            {"properties": [("tag_value", 2)]}
+            {"properties": [("tag_value", 2)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'THREE', "value": 'PRESS'},
-            {"properties": [("tag_value", 3)]}
+            {"properties": [("tag_value", 3)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'FOUR', "value": 'PRESS'},
-            {"properties": [("tag_value", 4)]}
+            {"properties": [("tag_value", 4)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'FIVE', "value": 'PRESS'},
-            {"properties": [("tag_value", 5)]}
+            {"properties": [("tag_value", 5)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'SIX', "value": 'PRESS'},
-            {"properties": [("tag_value", 6)]}
+            {"properties": [("tag_value", 6)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'SEVEN', "value": 'PRESS'},
-            {"properties": [("tag_value", 7)]}
+            {"properties": [("tag_value", 7)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'EIGHT', "value": 'PRESS'},
-            {"properties": [("tag_value", 8)]}
+            {"properties": [("tag_value", 8)]},
         ),
         (
             "edit_breakdown.thumbnail_tag",
             {"type": 'NINE', "value": 'PRESS'},
-            {"properties": [("tag_value", 9)]}
+            {"properties": [("tag_value", 9)]},
         ),
         # Selection
-        (
-            "edit_breakdown.thumbnail_select",
-            {"type": 'RIGHTMOUSE', "value": 'PRESS'},
-            None
-        ),
+        ("edit_breakdown.thumbnail_select", {"type": 'RIGHTMOUSE', "value": 'PRESS'}, None),
     )
 
     def draw_settings(context, layout, tool):
@@ -549,7 +545,8 @@ class ThumbnailTagTool(WorkSpaceTool):
         if not props.tag:
             layout.label(
                 icon='QUESTION',
-                text="Shot properties can be configured in the edit breakdown add-on settings")
+                text="Shot properties can be configured in the edit breakdown add-on settings",
+            )
             return
         layout.prop(props, "tag")
 
@@ -557,7 +554,6 @@ class ThumbnailTagTool(WorkSpaceTool):
         prop_rna = shot_cls.bl_rna.properties[props.tag]
         if prop_rna.type == 'ENUM':
             layout.prop(props, "tag_enum_option", text="")
-
 
 
 # Add-on Registration #############################################################################
