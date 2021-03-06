@@ -54,8 +54,8 @@ active_selected_thumbnail = None
 
 thumbnail_draw_region = (0, 0, 0, 0) # Rectangle inside a Blender region where the thumbnails draw
 
-group_by_sequence = False
-group_by_sequence_prev = False
+group_by_scene = False
+group_by_scene_prev = False
 
 class ThumbnailGroup:
 
@@ -144,7 +144,7 @@ def fit_thumbnails_in_region():
 
     log.debug("------Fit Images-------------------");
 
-    if group_by_sequence:
+    if group_by_scene:
         fit_thumbnails_in_group()
     else:
         fit_thumbnails_in_grid()
@@ -479,16 +479,16 @@ def draw_edit_thumbnails():
         fit_thumbnails_in_region()
 
     # Recalculate thumbnail positions if the grouping setting changes
-    global group_by_sequence_prev
-    if group_by_sequence_prev != group_by_sequence:
-        group_by_sequence_prev = group_by_sequence
+    global group_by_scene_prev
+    if group_by_scene_prev != group_by_scene:
+        group_by_scene_prev = group_by_scene
         fit_thumbnails_in_region()
 
     # If the resulting layout makes the images too small, skip rendering.
     if thumbnail_size[0] <= 5 or thumbnail_size[1] <= 5:
         return
 
-    if group_by_sequence:
+    if group_by_scene:
         font_id = 0 # Default font.
         blf.size(font_id, 12, 72)
         for group in thumbnail_groups:

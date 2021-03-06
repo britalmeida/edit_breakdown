@@ -26,6 +26,7 @@ from bpy.types import (
     AddonPreferences,
     Panel,
     PropertyGroup,
+    UIList,
 )
 from bpy.props import (
     BoolProperty,
@@ -94,7 +95,7 @@ custom_prop_data_types = [
 ]
 
 class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
-    """Definition of a user defined property for a shot or sequence"""
+    """Definition of a user defined property for a shot."""
 
     identifier: StringProperty(
         name="Identifier",
@@ -259,8 +260,28 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         return values
 
 
+class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
+    """Properties of a scene."""
+
+    name: StringProperty(
+        name="Scene Name",
+        description="Name of this scene",
+    )
+
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
+
+    scenes: CollectionProperty(
+        type=SEQUENCER_EditBreakdown_Scene,
+        name="Scenes",
+        description="Set of scenes that logically group shots",
+    )
+
+    active_scene_idx: IntProperty(
+        name="Active Scene",
+        description="Index of the currently active scene in the UIList",
+        default=0,
+    )
 
     shots: CollectionProperty(
         type=SEQUENCER_EditBreakdown_Shot,
@@ -321,13 +342,12 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         sub.operator("edit_breakdown.paste_custom_shot_props", icon='PASTEDOWN', text="")
         row.operator("edit_breakdown.shot_properties_tooltip", icon='QUESTION', text="")
 
-        scene = context.scene
-        user_configured_props = scene.edit_breakdown.shot_custom_props
+        edit_breakdown = context.scene.edit_breakdown
+        user_configured_props = edit_breakdown.shot_custom_props
 
         def get_ui_name_for_prop_type(prop_type):
             """Get the name to display in the UI for a property type"""
             return next((t[1] for t in custom_prop_data_types if t[0] == prop_type), "Unsupported")
-
 
         for prop in user_configured_props:
 
@@ -400,13 +420,26 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
             col_props.separator()
 
+        # 'Add Property' button
         row = col_props.row()
         row.operator("edit_breakdown.add_custom_shot_prop")
 
-        col_props = layout.column()
-        col_props.label(text="Sequence Properties:")
-        row = col_props.row()
-        row.label(text="[Add Property]")
+        # Sequences configuration
+        col = layout.column()
+        col.label(text="Scenes:")
+
+        # UI list
+        num_rows = 4 if len(edit_breakdown.scenes) > 0 else 1
+        row = col.row()
+        row.template_list(
+            "SEQUENCER_UL_Scenes", "",  # Type and unique id.
+            edit_breakdown, "scenes",  # Pointer to the CollectionProperty.
+            edit_breakdown, "active_scene_idx",  # Pointer to the active identifier.
+            rows=num_rows
+        )
+        but_col = row.column(align=True)
+        but_col.operator("edit_breakdown.add_scene", icon='ADD', text="")
+        but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
 
 
 
@@ -479,6 +512,15 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
             if is_enum_flag:
                 num_chosen_options, total_options = selected_shot.count_bits_in_flag(prop.identifier)
                 col.label(text=f"{prop.name} Count: {num_chosen_options} of {total_options}")
+
+
+class SEQUENCER_UL_Scenes(UIList):
+    """UI List for the scenes in the edit."""
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        sel_set = item
+        layout.prop(item, "name", text="", icon='EXPERIMENTAL', emboss=False)
+        #if self.layout_type in ('DEFAULT', 'COMPACT'):
+        #    layout.prop(item, "is_selected", text="")
 
 
 
@@ -571,9 +613,11 @@ classes = (
     SEQUENCER_EditBreakdown_Preferences,
     SEQUENCER_EditBreakdown_CustomProp,
     SEQUENCER_EditBreakdown_Shot,
+    SEQUENCER_EditBreakdown_Scene,
     SEQUENCER_EditBreakdown_Data,
     SEQUENCER_PT_edit_breakdown_overview,
     SEQUENCER_PT_edit_breakdown_shot,
+    SEQUENCER_UL_Scenes,
 )
 
 

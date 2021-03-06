@@ -239,6 +239,60 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
         return {'FINISHED'}
 
 
+class SEQUENCER_OT_add_scene(Operator):
+    bl_idname = "edit_breakdown.add_scene"
+    bl_label = "Add Scene"
+    bl_description = "Create a new scene for grouping shots"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        edit_breakdown = context.scene.edit_breakdown
+        edit_scenes = edit_breakdown.scenes
+
+        # Create the new scene.
+        new_scene = edit_scenes.add()
+        new_scene.name = "Scene"
+
+        # Select it.
+        edit_breakdown.active_scene_idx = len(edit_scenes) - 1
+
+        return {'FINISHED'}
+
+
+class SEQUENCER_OT_del_scene(Operator):
+    bl_idname = "edit_breakdown.del_scene"
+    bl_label = "Delete Scene"
+    bl_description = "Delete the scene from the edit breakdown, but not its associated shots"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        edit_breakdown = context.scene.edit_breakdown
+        return 0 <= edit_breakdown.active_scene_idx < len(edit_breakdown.scenes)
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        edit_breakdown = context.scene.edit_breakdown
+        edit_scenes = edit_breakdown.scenes
+
+        # Unlink the scene.
+        edit_scenes.remove(edit_breakdown.active_scene_idx)
+
+        # Ensure the selected scene is within range.
+        num_scenes = len(edit_scenes)
+        if (edit_breakdown.active_scene_idx > (num_scenes - 1) and num_scenes > 0):
+            edit_breakdown.active_scene_idx = num_scenes - 1
+
+        return {'FINISHED'}
+
+
 class SEQUENCER_OT_add_custom_shot_prop(Operator):
     bl_idname = "edit_breakdown.add_custom_shot_prop"
     bl_label = "Add Shot Property"
@@ -555,7 +609,7 @@ class UI_OT_experimentail(Operator):
         return True
 
     def execute(self, context):
-        view.group_by_sequence = not view.group_by_sequence
+        view.group_by_scene = not view.group_by_scene
         return {'FINISHED'}
 
 
@@ -567,8 +621,8 @@ def draw_sequencer_header_extension_left(self, context):
         return
     layout = self.layout
     layout.operator("edit_breakdown.experimentail",
-                    text="Group by: Sequence" if view.group_by_sequence else "Group by: None",
-                    icon='EXPERIMENTAL' if view.group_by_sequence else 'GROUP_VERTEX')
+                    text="Group by: Sequence" if view.group_by_scene else "Group by: None",
+                    icon='EXPERIMENTAL' if view.group_by_scene else 'GROUP_VERTEX')
 
 
 def draw_sequencer_header_extension_right(self, context):
@@ -585,6 +639,8 @@ def draw_sequencer_header_extension_right(self, context):
 classes = (
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
+    SEQUENCER_OT_add_scene,
+    SEQUENCER_OT_del_scene,
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
     SEQUENCER_OT_edit_custom_shot_prop,
