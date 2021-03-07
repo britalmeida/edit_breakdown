@@ -300,7 +300,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         Note: If a file is moved, the thumbnails will need to be recomputed.
         """
         hashed_filename = hashlib.md5(bpy.data.filepath.encode()).hexdigest()
-        storage_dir = get_datadir() / 'blender-edit-breakdown' / hashed_filename
+        storage_dir = utils.get_datadir() / 'blender-edit-breakdown' / hashed_filename
         storage_dir.mkdir(parents=True, exist_ok=True)
         return str(storage_dir)
 

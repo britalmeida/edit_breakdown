@@ -20,6 +20,7 @@
 
 
 import pathlib
+import sys
 
 import bpy
 
