@@ -104,10 +104,6 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
 
-    name: StringProperty(
-        name="Shot Name",
-        description="Name of this shot",
-    )
     frame_start: IntProperty(
         name="Start Frame",
         description="Frame at which this shot starts",
@@ -303,7 +299,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         name="Edit Shots",
         description="Folder with image thumbnails for each shot",
         default="",
-        subtype="FILE_PATH",
+        subtype="DIR_PATH",
         get=get_thumbnails_dir,
     )
 
