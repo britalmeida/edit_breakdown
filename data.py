@@ -617,12 +617,6 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.TimelineMarker.use_for_edit_breakdown = BoolProperty(
-        name="Use For Edit Breakdown",
-        default=True,
-        description="If this marker should be included as a shot in the edit breakdown view",
-    )
-
     bpy.types.Scene.edit_breakdown = PointerProperty(
         name="Edit Breakdown",
         type=SEQUENCER_EditBreakdown_Data,
@@ -638,7 +632,6 @@ def unregister():
     bpy.app.handlers.load_pre.remove(unregister_custom_properties)
     bpy.app.handlers.load_post.remove(register_custom_properties)
 
-    del bpy.types.TimelineMarker.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 
     for cls in reversed(classes):

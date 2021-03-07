@@ -18,7 +18,6 @@
 
 # <pep8 compliant>
 
-from dataclasses import dataclass
 import logging
 import math
 import os
