@@ -29,6 +29,7 @@ from bpy.types import (
 )
 from bpy.props import (
     CollectionProperty,
+    EnumProperty,  # Needed to register a custom prop with exec
     FloatVectorProperty,
     IntProperty,
     PointerProperty,
