@@ -231,9 +231,9 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
     """Properties of a scene."""
 
-    name: StringProperty(
-        name="Scene Name",
-        description="Name of this scene",
+    uuid: StringProperty(
+        name="UUID",
+        description="Unique identifier for this scene",
     )
 
 

@@ -79,3 +79,34 @@ def get_datadir() -> pathlib.Path:
         return home / ".local/share"
     elif sys.platform == "darwin":
         return home / "Library/Application Support"
+
+
+def create_unique_name(base_name: str, existing_objects: list) -> str:
+    """Returns a name not yet present in existing_names which starts with base_name.
+
+    Names follow Blender convention: base_name, base_name.001, base_name.002, etc.
+    e.g.: create_unique_name("Object", all_objects)
+    - all_objects = [] -> "Object"
+    - all_objects = ["Object"] -> "Object.001"
+    - all_objects = ["Object.002"] -> "Object"
+    """
+
+    # Get the object names.
+    existing_names = (ob.name for ob in existing_objects)
+
+    # If this is the first all of its name, no need to add a suffix.
+    if base_name not in existing_names:
+        return base_name
+
+    # Construct a sorted list of number suffixes already in use for base_name.
+    offset = len(base_name) + 1
+    suffixes = (name[offset:] for name in existing_names if name.startswith(base_name + '.'))
+    numbers = sorted(int(suffix) for suffix in suffixes if suffix.isdigit())
+
+    # Find the first unused number.
+    min_index = 1
+    for num in numbers:
+        if min_index < num:
+            break
+        min_index = num + 1
+    return f"{base_name}.{min_index:03d}"

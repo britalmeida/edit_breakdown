@@ -40,6 +40,7 @@ from bpy.props import (
 
 from . import data
 from . import tools
+from . import utils
 from . import view
 
 log = logging.getLogger(__name__)
@@ -255,9 +256,10 @@ class SEQUENCER_OT_add_scene(Operator):
         edit_breakdown = context.scene.edit_breakdown
         edit_scenes = edit_breakdown.scenes
 
-        # Create the new scene.
+        # Create the new scene with a unique ID
         new_scene = edit_scenes.add()
-        new_scene.name = "Scene"
+        new_scene.uuid = uuid.uuid4().hex
+        new_scene.name = utils.create_unique_name("Scene", edit_scenes)
 
         # Select it.
         edit_breakdown.active_scene_idx = len(edit_scenes) - 1
