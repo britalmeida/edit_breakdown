@@ -429,7 +429,7 @@ def fit_thumbnails_in_group():
     space_h = calculate_spacing(total_available_h, available_space, num_images_per_col)
 
     margins = (space_w[0], space_h[0])
-    spacing = (space_w[1], space_h[1] - 4)
+    spacing = (space_w[1], space_h[1])
 
     start_pos_x = start_w + margins[0]
     start_pos_y_title = total_available_h - margins[1] - group_titles_height
