@@ -20,20 +20,15 @@
 
 import hashlib
 import logging
-import sys
 
 import bpy
 from bpy.app.handlers import persistent
 from bpy.types import (
     AddonPreferences,
-    Panel,
     PropertyGroup,
-    UIList,
 )
 from bpy.props import (
-    BoolProperty,
     CollectionProperty,
-    EnumProperty,
     FloatVectorProperty,
     IntProperty,
     PointerProperty,
@@ -41,7 +36,6 @@ from bpy.props import (
 )
 
 from . import utils
-from . import view
 
 log = logging.getLogger(__name__)
 
@@ -431,87 +425,6 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
 
 
-# UI ##############################################################################################
-
-
-class SEQUENCER_PT_edit_breakdown_overview(Panel):
-    bl_label = "Overview"
-    bl_category = "Edit Breakdown"
-    bl_space_type = 'SEQUENCE_EDITOR'
-    bl_region_type = 'UI'
-
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
-        edit_breakdown = context.scene.edit_breakdown
-
-        col = layout.column(align=True)
-        utils.draw_stat_label(col, "Shots", f"{len(edit_breakdown.shots)}")
-        utils.draw_frame_prop(col, "Duration", edit_breakdown.total_frames)
-
-
-class SEQUENCER_PT_edit_breakdown_shot(Panel):
-    bl_label = "Shot"
-    bl_category = "Edit Breakdown"
-    bl_space_type = 'SEQUENCE_EDITOR'
-    bl_region_type = 'UI'
-
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
-        shots = context.scene.edit_breakdown.shots
-        sel_idx = context.scene.edit_breakdown.selected_shot_idx
-
-        if sel_idx < 0:
-            col = layout.column()
-            col.label(text=f"No shot selected")
-            return
-
-        selected_shot = shots[sel_idx]
-
-        col = layout.column()
-        col.prop(selected_shot, "name")
-
-        # Display frame information with a timestamp.
-        sub = col.column(align=True)
-        utils.draw_frame_prop(sub, "Start Frame", selected_shot.frame_start)
-        utils.draw_frame_prop(sub, "Duration", selected_shot.frame_count)
-
-        # Show user-defined properties
-        shot_cls = SEQUENCER_EditBreakdown_Shot
-        blend_file_data_props = shot_cls.get_custom_properties()
-        for prop in blend_file_data_props:
-            col.prop(selected_shot, prop.identifier)
-            # Display a count, if this is an enum
-            prop_rna = selected_shot.bl_rna.properties[prop.identifier]
-            is_enum_flag = prop_rna.type == 'ENUM' and prop_rna.is_enum_flag
-            if is_enum_flag:
-                num_chosen_options, num_options = selected_shot.count_bits_in_flag(prop.identifier)
-                col.label(text=f"{prop.name} Count: {num_chosen_options} of {num_options}")
-
-
-class SEQUENCER_UL_Scenes(UIList):
-    """UI List for the scenes in the edit."""
-
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        sel_set = item
-        layout.prop(item, "name", text="", icon='EXPERIMENTAL', emboss=False)
-        # if self.layout_type in ('DEFAULT', 'COMPACT'):
-        #    layout.prop(item, "is_selected", text="")
-
-
 # Property Registration On File Load ##############################################################
 
 
@@ -606,9 +519,6 @@ classes = (
     SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Scene,
     SEQUENCER_EditBreakdown_Data,
-    SEQUENCER_PT_edit_breakdown_overview,
-    SEQUENCER_PT_edit_breakdown_shot,
-    SEQUENCER_UL_Scenes,
 )
 
 

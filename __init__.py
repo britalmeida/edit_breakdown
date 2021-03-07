@@ -37,6 +37,7 @@ if "draw_utils" in locals():
     importlib.reload(data)
     importlib.reload(draw_utils)
     importlib.reload(ops)
+    importlib.reload(panels)
     importlib.reload(tools)
     importlib.reload(utils)
     importlib.reload(view)
@@ -44,6 +45,7 @@ else:
     from . import data
     from . import draw_utils
     from . import ops
+    from . import panels
     from . import tools
     from . import utils
     from . import view
@@ -56,6 +58,7 @@ def register():
 
     data.register()
     ops.register()
+    panels.register()
     tools.register()
     view.register()
 
@@ -68,6 +71,7 @@ def unregister():
 
     data.unregister()
     ops.unregister()
+    panels.unregister()
     tools.unregister()
     view.unregister()
 
