@@ -38,12 +38,14 @@ if "draw_utils" in locals():
     importlib.reload(draw_utils)
     importlib.reload(ops)
     importlib.reload(tools)
+    importlib.reload(utils)
     importlib.reload(view)
 else:
     from . import data
     from . import draw_utils
     from . import ops
     from . import tools
+    from . import utils
     from . import view
 
 log = logging.getLogger(__name__)
