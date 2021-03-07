@@ -64,6 +64,7 @@ class ThumbnailGroup:
         self.pos = (0, 0)
         self.shot_ids = []
         self.shot_rows = 0
+        self.scene_uuid = ""
 
 
 thumbnail_groups = []
@@ -270,49 +271,33 @@ def fit_thumbnails_in_grid():
 def fit_thumbnails_in_group():
     """ """
 
-    scene = bpy.context.scene
-    shots = scene.edit_breakdown.shots
+    edit_breakdown = bpy.context.scene.edit_breakdown
+    shots = edit_breakdown.shots
+    scenes = edit_breakdown.scenes
     num_images = len(thumbnail_images)
-
-    # Find the property definition.
-    prop_to_group_by = 'cp_8c8ff71b'  # Sequence - fsiddi's file
-    # prop_to_group_by = 'cp_14c9110f'  # Sequence - brita's file
-
-    try:
-        # shot_cls = data.SEQUENCER_EditBreakdown_Shot
-        # prop_rna = shot_cls.bl_rna.properties[prop_to_group_by]
-        prop_rna = shots[0].rna_type.properties[prop_to_group_by]
-    except KeyError:
-        return
-    user_configured_props = scene.edit_breakdown.shot_custom_props
-    prop_config = next((p for p in user_configured_props if p.identifier == prop_to_group_by), None)
-
-    if prop_config.data_type != 'ENUM_VAL':
-        return
 
     thumbnail_groups.clear()
 
     # Create the thumbnail groups
-    for i, item in enumerate(prop_rna.enum_items):
+    for i, scene in enumerate(scenes):
         group = ThumbnailGroup()
-        group.name = item.name
+        group.name = scene.name
+        group.scene_uuid = scene.uuid
         thumbnail_groups.append(group)
-
-    if prop_config.data_type == 'ENUM_FLAG':
-        unassigned_group = ThumbnailGroup()
-        unassigned_group.name = "Unassigned"
-        thumbnail_groups.append(unassigned_group)
 
     # Assign shots to groups
     for shot_idx, shot in enumerate(shots):
-        value = shot.get_prop_value(prop_to_group_by)
-        value = int(shot.get(prop_to_group_by, 0))
-        active_enum_item = value
-        thumbnail_groups[active_enum_item].shot_ids.append(shot_idx)
-        thumbnail_images[shot_idx].group_idx = active_enum_item
-        thumbnail_images[shot_idx].pos_in_group = (
-            len(thumbnail_groups[active_enum_item].shot_ids) - 1
-        )
+
+        scene_idx = 0
+        for i, scene in enumerate(scenes):
+            if scene.uuid == shot.scene_uuid:
+                scene_idx = i
+                break
+        group = thumbnail_groups[scene_idx]
+        if group:
+            group.shot_ids.append(shot_idx)
+            thumbnail_images[shot_idx].group_idx = scene_idx
+            thumbnail_images[shot_idx].pos_in_group = len(group.shot_ids) - 1
 
     print(f"Assigned shots to {len(thumbnail_groups)} groups")
     for i, group in enumerate(thumbnail_groups):

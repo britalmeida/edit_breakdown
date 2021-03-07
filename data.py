@@ -101,6 +101,15 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     )
 
 
+class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
+    """Properties of a scene."""
+
+    uuid: StringProperty(
+        name="UUID",
+        description="Unique identifier for this scene",
+    )
+
+
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     """Properties of a shot."""
 
@@ -119,6 +128,10 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     timeline_marker: StringProperty(
         name="Timeline Marker UUID",
         description="Unequivocally links this shot with a timeline marker",
+    )
+    scene_uuid: StringProperty(
+        name="Scene UUID",
+        description="UUID of the edit scene that this shot is part of",
     )
 
     @property
@@ -222,15 +235,6 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
             else:
                 values.append(self.get_prop_value(prop.identifier))
         return values
-
-
-class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
-    """Properties of a scene."""
-
-    uuid: StringProperty(
-        name="UUID",
-        description="Unique identifier for this scene",
-    )
 
 
 class SEQUENCER_EditBreakdown_Data(PropertyGroup):
@@ -513,8 +517,8 @@ def unregister_custom_properties(scene):
 classes = (
     SEQUENCER_EditBreakdown_Preferences,
     SEQUENCER_EditBreakdown_CustomProp,
-    SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Scene,
+    SEQUENCER_EditBreakdown_Shot,
     SEQUENCER_EditBreakdown_Data,
 )
 
