@@ -31,7 +31,7 @@ from . import view
 
 class SEQUENCER_PT_edit_breakdown_overview(Panel):
     bl_label = "Overview"
-    bl_category = "Edit Breakdown"
+    bl_category = "Edit Breakdown - Shot"
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
 
@@ -54,7 +54,7 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
 
 class SEQUENCER_PT_edit_breakdown_shot(Panel):
     bl_label = "Shot"
-    bl_category = "Edit Breakdown"
+    bl_category = "Edit Breakdown - Shot"
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
 
@@ -103,7 +103,7 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
                 col.label(text=f"{prop.name} Count: {num_chosen_options} of {num_options}")
 
 
-class SEQUENCER_UL_Scenes(UIList):
+class SEQUENCER_UL_edit_breakdown_scenes(UIList):
     """UI List for the scenes in the edit."""
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -113,12 +113,147 @@ class SEQUENCER_UL_Scenes(UIList):
         #    layout.prop(item, "is_selected", text="")
 
 
+class SEQUENCER_PT_edit_breakdown_scenes(Panel):
+    bl_label = "Scenes"
+    bl_category = "Edit Breakdown - Config"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'UI'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        edit_breakdown = bpy.context.scene.edit_breakdown
+
+        # UI list
+        num_rows = 12 if len(edit_breakdown.scenes) > 0 else 4
+        row = layout.row()
+        # fmt: off
+        row.template_list(
+            "SEQUENCER_UL_edit_breakdown_scenes", "",  # Type and unique id.
+            edit_breakdown, "scenes",  # Pointer to the CollectionProperty.
+            edit_breakdown, "active_scene_idx",  # Pointer to the active identifier.
+            rows=num_rows,
+        )
+        # fmt: on
+        but_col = row.column(align=True)
+        but_col.operator("edit_breakdown.add_scene", icon='ADD', text="")
+        but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
+
+
+class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):
+    bl_label = "Shot Properties"
+    bl_category = "Edit Breakdown - Config"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'UI'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        col_props = layout.column()
+        row = col_props.row()
+        # 'Add Property' button
+        row = col_props.row()
+        row.operator("edit_breakdown.add_custom_shot_prop")
+        # Actions
+        sub = row.row(align=True)
+        sub.enabled = False
+        sub.operator("edit_breakdown.copy_custom_shot_props", icon='COPYDOWN', text="")
+        sub.operator("edit_breakdown.paste_custom_shot_props", icon='PASTEDOWN', text="")
+        row.operator("edit_breakdown.shot_properties_tooltip", icon='QUESTION', text="")
+
+        edit_breakdown = context.scene.edit_breakdown
+        user_configured_props = edit_breakdown.shot_custom_props
+        data_types = data.custom_prop_data_types
+
+        def get_ui_icon_for_prop_type(prop_type):
+            """Get the name to display in the UI for a property type"""
+            return next((t[3] for t in data_types if t[0] == prop_type), 'ERROR')
+
+        for prop in user_configured_props:
+
+            col_props.separator()
+            box = col_props.box()
+            row = box.row()
+            row.enabled = prop.data_type in (t[0] for t in data_types)
+
+            # Color
+            split = row.split(factor=0.1)
+            row = split.row(align=True)
+            row.alignment = 'LEFT'
+            row.prop(prop, "color", text="")
+
+            # Data type
+            row = split.row(align=True)
+            split = row.split(factor=0.75)
+            row = split.row(align=False)
+            row.alignment = 'LEFT'
+            row.label(text="", icon=get_ui_icon_for_prop_type(prop.data_type))
+
+            # Name
+            row.label(text=prop.name)
+
+            # Edit button
+            row = split.row(align=True)
+            row.alignment = 'RIGHT'
+            edit_op = row.operator(
+                "edit_breakdown.edit_custom_shot_prop", text="", icon="OUTLINER_DATA_GP_LAYER"
+            )
+            edit_op.prop_id = prop.identifier
+            edit_op.name = prop.name
+            edit_op.description = prop.description
+            edit_op.data_type = prop.data_type
+            edit_op.range_min = prop.range_min
+            edit_op.range_max = prop.range_max
+            edit_op.enum_items = prop.enum_items
+            # Delete button
+            row.operator(
+                "edit_breakdown.del_custom_shot_prop", text="", icon="X"
+            ).prop_id = prop.identifier
+
+            # Extra details for specific prop types
+            if prop.data_type == 'INT':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                # Leave area under color empty, for alignment
+                row = split.row(align=True)
+                split = row.split(factor=1.0)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text=f"Min: {prop.range_min}  Max: {prop.range_max}")
+
+            elif prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
+                row = box.row()
+                split = row.split(factor=0.1)
+                row = split.row(align=True)
+                # Leave area under color empty, for alignment
+                row = split.row(align=True)
+                split = row.split(factor=1.0)
+                row = split.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text=str(prop.enum_items))
+
+
 # Add-on Registration #############################################################################
 
 classes = (
     SEQUENCER_PT_edit_breakdown_overview,
     SEQUENCER_PT_edit_breakdown_shot,
-    SEQUENCER_UL_Scenes,
+    SEQUENCER_UL_edit_breakdown_scenes,
+    SEQUENCER_PT_edit_breakdown_scenes,
+    SEQUENCER_PT_edit_breakdown_shot_custom_props,
 )
 
 
