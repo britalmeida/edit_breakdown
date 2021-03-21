@@ -629,7 +629,7 @@ def draw_sequencer_header_extension_left(self, context):
     layout = self.layout
     layout.operator(
         "edit_breakdown.experimentail",
-        text="Group by: Sequence" if view.group_by_scene else "Group by: None",
+        text="Group by: Scene" if view.group_by_scene else "Group by: None",
         icon='EXPERIMENTAL' if view.group_by_scene else 'GROUP_VERTEX',
     )
 

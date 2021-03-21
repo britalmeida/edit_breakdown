@@ -406,7 +406,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
         row = col_props.row()
         row.operator("edit_breakdown.add_custom_shot_prop")
 
-        # Sequences configuration
+        # Scenes configuration
         col = layout.column()
         col.label(text="Scenes:")
 
@@ -475,7 +475,7 @@ def unregister_custom_prop(data_cls, prop_identifier):
 
 @persistent
 def register_custom_properties(scene):
-    """Register the custom shot and sequence data.
+    """Register the custom shot and scene data.
 
     The custom data is defined on a per-file basis (as opposed to user settings).
     Whenever loading a file, this function ensures that the custom data defined
@@ -491,13 +491,13 @@ def register_custom_properties(scene):
     for prop in custom_props:
         register_custom_prop(shot_cls, prop)
 
-    # Register custom sequence properties
+    # Register custom scene properties
     pass
 
 
 @persistent
 def unregister_custom_properties(scene):
-    """Unregister the custom shot and sequence data"""
+    """Unregister the custom shot and scene data"""
 
     log.info("Unregistering custom properties for loaded file")
 
@@ -508,7 +508,7 @@ def unregister_custom_properties(scene):
     for prop in custom_props:
         unregister_custom_prop(shot_cls, prop.identifier)
 
-    # Unregister custom sequence properties
+    # Unregister custom scene properties
     pass
 
 

@@ -273,24 +273,24 @@ def fit_thumbnails_in_group():
 
     edit_breakdown = bpy.context.scene.edit_breakdown
     shots = edit_breakdown.shots
-    scenes = edit_breakdown.scenes
+    edit_scenes = edit_breakdown.scenes
     num_images = len(thumbnail_images)
 
     thumbnail_groups.clear()
 
     # Create the thumbnail groups
-    for i, scene in enumerate(scenes):
+    for i, eb_scene in enumerate(edit_scenes):
         group = ThumbnailGroup()
-        group.name = scene.name
-        group.scene_uuid = scene.uuid
+        group.name = eb_scene.name
+        group.scene_uuid = eb_scene.uuid
         thumbnail_groups.append(group)
 
     # Assign shots to groups
     for shot_idx, shot in enumerate(shots):
 
         scene_idx = 0
-        for i, scene in enumerate(scenes):
-            if scene.uuid == shot.scene_uuid:
+        for i, eb_scene in enumerate(edit_scenes):
+            if eb_scene.uuid == shot.scene_uuid:
                 scene_idx = i
                 break
         group = thumbnail_groups[scene_idx]
