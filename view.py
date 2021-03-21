@@ -146,9 +146,10 @@ def fit_thumbnails_in_region():
 
     log.debug("------Fit Images-------------------")
 
-    if edit_breakdown.view_grouped_by_scene:
+    if edit_breakdown.view_grouped_by_scene and edit_breakdown.scenes:
         fit_thumbnails_in_group()
     else:
+        thumbnail_groups.clear()
         fit_thumbnails_in_grid()
 
 
