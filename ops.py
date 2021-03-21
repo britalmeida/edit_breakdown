@@ -605,21 +605,6 @@ class UI_OT_shot_properties_tooltip(Operator):
         col.label(text="Note: Custom properties are saved per file (not a user preference)")
 
 
-class UI_OT_experimentail(Operator):
-    bl_idname = "edit_breakdown.experimentail"
-    bl_label = "Group by: Character"
-    bl_description = "Experimentail"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def execute(self, context):
-        view.group_by_scene = not view.group_by_scene
-        return {'FINISHED'}
-
-
 # UI ##############################################################################################
 
 
@@ -627,11 +612,7 @@ def draw_sequencer_header_extension_left(self, context):
     if not view.is_thumbnail_view():
         return
     layout = self.layout
-    layout.operator(
-        "edit_breakdown.experimentail",
-        text="Group by: Scene" if view.group_by_scene else "Group by: None",
-        icon='EXPERIMENTAL' if view.group_by_scene else 'GROUP_VERTEX',
-    )
+    layout.prop(context.scene.edit_breakdown, "view_grouped_by_scene", text="Group by Scene")
 
 
 def draw_sequencer_header_extension_right(self, context):
@@ -655,7 +636,6 @@ classes = (
     SEQUENCER_OT_copy_custom_shot_props,
     SEQUENCER_OT_paste_custom_shot_props,
     UI_OT_shot_properties_tooltip,
-    UI_OT_experimentail,
 )
 
 

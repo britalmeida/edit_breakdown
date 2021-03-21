@@ -28,6 +28,7 @@ from bpy.types import (
     PropertyGroup,
 )
 from bpy.props import (
+    BoolProperty,
     CollectionProperty,
     EnumProperty,  # Needed to register a custom prop with exec
     FloatVectorProperty,
@@ -275,6 +276,12 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         type=SEQUENCER_EditBreakdown_CustomProp,
         name="Shot Custom Properties",
         description="Data that can be set per shot",
+    )
+
+    view_grouped_by_scene: BoolProperty(
+        name="View Grouped by Scene",
+        description="Should the shot thumbnails show grouped by scene?",
+        default=False,
     )
 
     @property

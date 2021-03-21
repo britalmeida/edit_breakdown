@@ -54,7 +54,6 @@ active_selected_thumbnail = None
 
 thumbnail_draw_region = (0, 0, 0, 0)  # Rectangle inside a Blender region where the thumbnails draw
 
-group_by_scene = False
 group_by_scene_prev = False
 
 
@@ -140,14 +139,14 @@ def fit_thumbnails_in_region():
     """Calculate the thumbnails' size and where to render each one so they fit the given region"""
 
     # If there are no images to fit, we're done!
-    scene = bpy.context.scene
-    shots = scene.edit_breakdown.shots
+    edit_breakdown = bpy.context.scene.edit_breakdown
+    shots = edit_breakdown.shots
     if not shots:
         return
 
     log.debug("------Fit Images-------------------")
 
-    if group_by_scene:
+    if edit_breakdown.view_grouped_by_scene:
         fit_thumbnails_in_group()
     else:
         fit_thumbnails_in_grid()
@@ -495,6 +494,7 @@ def draw_edit_thumbnails():
 
     # Recalculate thumbnail positions if the grouping setting changes
     global group_by_scene_prev
+    group_by_scene = bpy.context.scene.edit_breakdown.view_grouped_by_scene
     if group_by_scene_prev != group_by_scene:
         group_by_scene_prev = group_by_scene
         fit_thumbnails_in_region()
