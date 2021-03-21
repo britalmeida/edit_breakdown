@@ -72,21 +72,22 @@ def select_shot(scene, new_selected_thumbnail):
         scene.edit_breakdown.selected_shot_idx = -1
 
     # Select corresponding timeline marker
-    shots = scene.edit_breakdown.shots
-    sel_shot_idx = scene.edit_breakdown.selected_shot_idx
-    marker_uuid = shots[sel_shot_idx].timeline_marker
-    marker = None
+    if edit_breakdown.selected_shot_idx != -1:
 
-    markers = scene.timeline_markers
-    for m in markers:
-        m.select = False
-        if not m.get('uuid'):
-            continue
-        if m['uuid'] == marker_uuid:
-            marker = m
+        edit_breakdown = scene.edit_breakdown
+        shots = edit_breakdown.shots
+        sel_shot_idx = edit_breakdown.selected_shot_idx
+        marker_uuid = shots[sel_shot_idx].timeline_marker
+        markers = scene.timeline_markers
 
-    if marker:
-        marker.select = True
+        # Deselect all markers
+        for m in markers:
+            m.select = False
+
+        # Select the marker corresponding to the selected shot, if found
+        marker = next((m for m in markers if m.get('uuid') == marker_uuid), None)
+        if marker:
+            marker.select = True
 
 
 @persistent
