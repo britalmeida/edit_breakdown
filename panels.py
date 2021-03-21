@@ -131,7 +131,7 @@ class SEQUENCER_PT_edit_breakdown_scenes(Panel):
         edit_breakdown = bpy.context.scene.edit_breakdown
 
         # UI list
-        num_rows = 12 if len(edit_breakdown.scenes) > 0 else 4
+        num_rows = 10 if len(edit_breakdown.scenes) > 0 else 3
         row = layout.row()
         # fmt: off
         row.template_list(
@@ -141,9 +141,19 @@ class SEQUENCER_PT_edit_breakdown_scenes(Panel):
             rows=num_rows,
         )
         # fmt: on
+
+        # Buttons on the right
         but_col = row.column(align=True)
         but_col.operator("edit_breakdown.add_scene", icon='ADD', text="")
         but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
+        # Specials menu
+        but_col.separator()
+        but_col.menu("SEQUENCER_MT_scenes_context_menu", icon='DOWNARROW_HLT', text="")
+        # Move up&down arrows
+        if edit_breakdown.scenes:
+            but_col.separator()
+            but_col.operator("edit_breakdown.scene_move", icon='TRIA_UP', text="").direction = 'UP'
+            but_col.operator("edit_breakdown.scene_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
 
 
 class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):

@@ -31,7 +31,7 @@ import sys
 import uuid
 
 import bpy
-from bpy.types import Operator
+from bpy.types import Menu, Operator
 from bpy.props import (
     EnumProperty,
     IntProperty,
@@ -293,6 +293,73 @@ class SEQUENCER_OT_del_scene(Operator):
             edit_breakdown.active_scene_idx = num_scenes - 1
 
         return {'FINISHED'}
+
+
+class SEQUENCER_OT_del_scene_all(Operator):
+    bl_idname = "edit_breakdown.del_scene_all"
+    bl_label = "Delete All Scenes"
+    bl_description = "Deletes all scenes from the edit breakdown, but not the associated shots"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.edit_breakdown.scenes) > 1
+
+    def execute(self, context):
+        edit_breakdown = context.scene.edit_breakdown
+        # Unlink the scene from all shots
+        for shot in edit_breakdown.shots:
+            shot.scene_uuid = ''
+        # Delete all edit scenes
+        edit_breakdown.scenes.clear()
+        # Refresh the view in case it was grouped by scene
+        view.fit_thumbnails_in_region()
+        return {'FINISHED'}
+
+
+class SEQUENCER_OT_move_scene(Operator):
+    bl_idname = "edit_breakdown.scene_move"
+    bl_label = "Move Scene in List"
+    bl_description = "Move the active Edit Scene up/down the list"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    direction: EnumProperty(
+        name="Move Direction",
+        description="Direction to move the active scene: UP (default) or DOWN",
+        items=[
+            ('UP', "Up", "", -1),
+            ('DOWN', "Down", "", 1),
+        ],
+        default='UP',
+        options={'HIDDEN'},
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.edit_breakdown.scenes) > 1
+
+    def execute(self, context):
+        edit_breakdown = context.scene.edit_breakdown
+
+        eb_scenes = edit_breakdown.scenes
+        active_idx = edit_breakdown.active_scene_idx
+        new_idx = active_idx + (-1 if self.direction == 'UP' else 1)
+
+        if new_idx < 0 or new_idx >= len(eb_scenes):
+            return {'FINISHED'}
+
+        eb_scenes.move(active_idx, new_idx)
+        edit_breakdown.active_scene_idx = new_idx
+
+        return {'FINISHED'}
+
+
+class SEQUENCER_MT_scenes_context_menu(Menu):
+    bl_label = "Edit Scenes Specials"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("edit_breakdown.del_scene_all", icon='X')
 
 
 class SEQUENCER_OT_add_custom_shot_prop(Operator):
@@ -630,6 +697,9 @@ classes = (
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
     SEQUENCER_OT_add_scene,
     SEQUENCER_OT_del_scene,
+    SEQUENCER_OT_del_scene_all,
+    SEQUENCER_OT_move_scene,
+    SEQUENCER_MT_scenes_context_menu,
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
     SEQUENCER_OT_edit_custom_shot_prop,
