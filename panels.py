@@ -47,6 +47,7 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         edit_breakdown = context.scene.edit_breakdown
 
         col = layout.column(align=True)
+        utils.draw_stat_label(col, "Scenes", f"{len(edit_breakdown.scenes)}")
         utils.draw_stat_label(col, "Shots", f"{len(edit_breakdown.shots)}")
         utils.draw_frame_prop(col, "Duration", edit_breakdown.total_frames)
 
@@ -66,8 +67,9 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
 
-        shots = context.scene.edit_breakdown.shots
-        sel_idx = context.scene.edit_breakdown.selected_shot_idx
+        edit_breakdown = bpy.context.scene.edit_breakdown
+        shots = edit_breakdown.shots
+        sel_idx = edit_breakdown.selected_shot_idx
 
         if sel_idx < 0:
             col = layout.column()
@@ -83,6 +85,10 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
         sub = col.column(align=True)
         utils.draw_frame_prop(sub, "Start Frame", selected_shot.frame_start)
         utils.draw_frame_prop(sub, "Duration", selected_shot.frame_count)
+
+        # Scene that this shot belongs to
+        eb_scene = edit_breakdown.find_scene(selected_shot.scene_uuid)
+        utils.draw_stat_label(col, "Scene", eb_scene.name if eb_scene else "")
 
         # Show user-defined properties
         shot_cls = data.SEQUENCER_EditBreakdown_Shot

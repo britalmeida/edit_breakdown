@@ -179,7 +179,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['name', 'frame_start', 'frame_count', 'timeline_marker']
+        return ['name', 'frame_start', 'frame_count', 'timeline_marker', 'scene_uuid']
 
     @classmethod
     def get_custom_properties(cls):
@@ -194,7 +194,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_csv_export_header(cls):
         """Returns a list of human readable names for the CSV column headers"""
-        attrs = ['Name', 'Start Frame', 'Timestamp', 'Duration (s)']
+        attrs = ['Name', 'Start Frame', 'Timestamp', 'Duration (s)', 'Scene']
         for prop in cls.get_custom_properties():
             if prop.type == 'INT':
                 attrs.append(f"{prop.name} ({prop.hard_min}-{prop.hard_max})")
@@ -211,12 +211,20 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     def get_csv_export_values(self):
         """Returns a list of values for the CSV exported properties"""
+
+        # Add values of the hardcoded properties
         values = [
             self.name,
             self.frame_start,
             utils.timestamp_str(self.frame_start),
             self.duration_seconds,
         ]
+        # Add the scene this shot belongs to by name
+        edit_breakdown = bpy.context.scene.edit_breakdown
+        eb_scene = edit_breakdown.find_scene(self.scene_uuid)
+        values.append(eb_scene.name if eb_scene else "")
+
+        # Add values of the user-defined properties
         for prop in self.get_custom_properties():
             if prop.type == 'ENUM' and prop.is_enum_flag:
                 # Add count
@@ -278,6 +286,10 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
         first_shot = self.shots[0]
         last_shot = self.shots[-1]
         return last_shot.frame_start + last_shot.frame_count - first_shot.frame_start
+
+    def find_scene(self, scene_uuid: str) -> SEQUENCER_EditBreakdown_Scene:
+        """Returns the edit scene matching the given UUID"""
+        return next((sc for sc in self.scenes if sc.uuid == scene_uuid), None)
 
 
 # Settings ########################################################################################
