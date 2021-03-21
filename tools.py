@@ -72,9 +72,8 @@ def select_shot(scene, new_selected_thumbnail):
         scene.edit_breakdown.selected_shot_idx = -1
 
     # Select corresponding timeline marker
+    edit_breakdown = scene.edit_breakdown
     if edit_breakdown.selected_shot_idx != -1:
-
-        edit_breakdown = scene.edit_breakdown
         shots = edit_breakdown.shots
         sel_shot_idx = edit_breakdown.selected_shot_idx
         marker_uuid = shots[sel_shot_idx].timeline_marker
