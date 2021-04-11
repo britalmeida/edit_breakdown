@@ -21,8 +21,9 @@
 import contextlib
 import csv
 import io
-import pathlib
 import logging
+import math
+import pathlib
 import time
 import uuid
 
@@ -79,17 +80,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         path = folder_path.joinpath(file_name)
         datablock.save_render(str(path))
 
-    def calculate_shots_duration(self, context):
-        scene = context.scene
-        shots = scene.edit_breakdown.shots
-        if not shots:
-            return
-
-        last_frame = max(scene.frame_end, shots[-1].frame_start)
-        for shot in reversed(shots):
-            shot.frame_count = last_frame - shot.frame_start
-            last_frame = shot.frame_start
-
     @classmethod
     def poll(cls, context):
         return True
@@ -100,12 +90,13 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         Recreate the edit breakdown data based on the current edit.
         """
 
-        log.info("Syncing edit markers to thumbnails and shot data...")
+        log.info("Syncing sequencer strips to thumbnails and shot data...")
         time_start = time.time()
 
         scene = context.scene
         sequence_ed = scene.sequence_editor
-        markers = scene.timeline_markers
+        strips = sequence_ed.sequences
+        eb_strips = [s for s in strips if s.use_for_edit_breakdown]
         shots = scene.edit_breakdown.shots
 
         # Clear the previous runtime data.
@@ -126,45 +117,44 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Render a thumbnail to disk per each frame
         log.info("Creating thumbnails...")
         with self.override_render_settings(context):
-            for m in markers:
-                scene.frame_current = m.frame
+            for strip in eb_strips:
+                strip_mid_frame = math.floor(strip.frame_final_duration / 2)
+                scene.frame_current = strip.frame_final_start + strip_mid_frame
                 bpy.ops.render.render()
-                file_name = f'{str(context.scene.frame_current)}.jpg'
+                file_name = f'{str(scene.frame_current)}.jpg'
                 self.save_render(bpy.data.images['Render Result'], file_name)
         log.info(f"Thumbnails generated in {(time.time() - time_start):.2f}s")
 
-        # Load data from the sequence markers marked for use in the edit breakdown
-        # Match existing markers and existing shots
-        log.debug(f"Syncing {len(markers)} markers -> {len(shots)} shots")
+        # Load data from the sequence strips marked for use in the edit breakdown
+        # Match existing strips and existing shots
+        log.debug(f"Syncing {len(eb_strips)} strips -> {len(shots)} shots")
 
-        # Ensure every marker has a shot
-        for m in markers:
-            associated_shot = 'uuid' in m.keys() and next(
-                (s for s in shots if m['uuid'] == s.timeline_marker), None
-            )
+        # Ensure every strip has a shot
+        for strip in eb_strips:
+            associated_shot = next((s for s in shots if strip.name == s.strip_name), None)
             if not associated_shot:
-                # Found a marker without associated shot? Create shot!
-                log.debug(f"Creating new shot for marker {m.name}")
+                # Found a strip without associated shot? Create shot!
+                log.debug(f"Creating new shot for strip {strip.name}")
                 new_shot = shots.add()
 
-                new_shot.name = m.name
-                new_shot.frame_start = m.frame
+                new_shot.name = strip.name
+                new_shot.frame_start = strip.frame_final_start
+                new_shot.frame_count = strip.frame_final_end - strip.frame_final_start
 
-                # Create a unique identifier to associate the marker and the shot.
-                uuid_str = uuid.uuid4().hex
-                new_shot.timeline_marker = uuid_str
-                m['uuid'] = uuid_str
+                # Associate the shot with the sequence by name
+                new_shot.strip_name = strip.name
 
-        # Update all shots with the associated marker data.
-        # Delete shots that no longer match a marker.
+        # Update all shots with the associated strip data.
+        # Delete shots that no longer match a strip.
         i = len(shots)
         for shot in reversed(shots):
             i -= 1
-            marker_match = next((m for m in markers if m['uuid'] == shot.timeline_marker), None)
-            if marker_match:
+            strip_match = next((strip for strip in eb_strips if strip.name == shot.strip_name), None)
+            if strip_match:
                 # Update data.
                 log.debug(f"Update shot info {i} - {shot.name}")
-                shot.frame_start = marker_match.frame
+                shot.frame_start = strip_match.frame_start
+                shot.frame_count = strip_match.frame_final_end - strip_match.frame_final_start
             else:
                 log.debug(f"Deleting shot {i} - {shot.name}")
                 shots.remove(i)
@@ -178,9 +168,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             while insert_pos >= 0 and shots[insert_pos].frame_start > value_being_sorted:
                 shots.move(insert_pos, insert_pos + 1)
                 insert_pos -= 1
-
-        # Calculate frame count information for each shot.
-        self.calculate_shots_duration(context)
 
         # Update the thumbnails view
         view.load_edit_thumbnails()

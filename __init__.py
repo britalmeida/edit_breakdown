@@ -22,7 +22,7 @@ bl_info = {
     "name": "Edit Breakdown",
     "author": "Inês Almeida, Francesco Siddi",
     "version": (0, 1, 0),
-    "blender": (2, 90, 0),
+    "blender": (2, 91, 0),
     "location": "Video Sequence Editor",
     "description": "Get insight on the complexity of an edit",
     "doc_url": "https://github.com/britalmeida/blender_addon_edit_breakdown",

@@ -124,9 +124,9 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         soft_min=0,
         default=0,
     )
-    timeline_marker: StringProperty(
-        name="Timeline Marker UUID",
-        description="Unequivocally links this shot with a timeline marker",
+    strip_name: StringProperty(
+        name="Strip Name",
+        description="Unequivocally links this shot with a sequencer strip",
     )
     scene_uuid: StringProperty(
         name="Scene UUID",
@@ -178,7 +178,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['name', 'frame_start', 'frame_count', 'timeline_marker', 'scene_uuid']
+        return ['name', 'frame_start', 'frame_count', 'strip_name', 'scene_uuid']
 
     @classmethod
     def get_custom_properties(cls):
@@ -284,13 +284,11 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
     @property
     def total_frames(self):
-        """The total number of frames in the edit, according to the shot range"""
-
-        if len(self.shots) < 1:
-            return 0
-        first_shot = self.shots[0]
-        last_shot = self.shots[-1]
-        return last_shot.frame_start + last_shot.frame_count - first_shot.frame_start
+        """The total number of frames in the edit, including overlapping frames"""
+        num_frames = 0
+        for shot in self.shots:
+            num_frames += shot.frame_count
+        return num_frames
 
     def find_scene(self, scene_uuid: str) -> SEQUENCER_EditBreakdown_Scene:
         """Returns the edit scene matching the given UUID"""
@@ -440,6 +438,12 @@ def register():
         description="Shot data used by the Edit Breakdown add-on.",
     )
 
+    bpy.types.Sequence.use_for_edit_breakdown = BoolProperty(
+        name="Use For Edit Breakdown",
+        default=False,
+        description="If this strip should be included as a shot in the edit breakdown view",
+    )
+
     bpy.app.handlers.load_pre.append(unregister_custom_properties)
     bpy.app.handlers.load_post.append(register_custom_properties)
 
@@ -449,6 +453,7 @@ def unregister():
     bpy.app.handlers.load_pre.remove(unregister_custom_properties)
     bpy.app.handlers.load_post.remove(register_custom_properties)
 
+    del bpy.types.Sequence.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 
     for cls in reversed(classes):

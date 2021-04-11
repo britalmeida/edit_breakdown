@@ -131,8 +131,7 @@ def load_edit_thumbnails():
         if img.id_image.gl_load():
             raise Exception()
 
-    num_images = len(thumbnail_images)
-    log.info(f"Loaded {num_images} images.")
+    log.info(f"Loaded {len(thumbnail_images)} images.")
 
 
 def fit_thumbnails_in_region():
@@ -141,7 +140,7 @@ def fit_thumbnails_in_region():
     # If there are no images to fit, we're done!
     edit_breakdown = bpy.context.scene.edit_breakdown
     shots = edit_breakdown.shots
-    if not shots:
+    if not shots or not thumbnail_images:
         return
 
     log.debug("------Fit Images-------------------")
