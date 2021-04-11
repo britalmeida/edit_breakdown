@@ -506,6 +506,7 @@ def draw_edit_thumbnails():
     if group_by_scene:
         font_id = 0  # Default font.
         blf.size(font_id, 12, 72)
+        blf.color(font_id, 0.9, 0.9, 0.9, 1.0)
         for group in thumbnail_groups:
             blf.position(font_id, group.pos[0], group.pos[1], 0)
             blf.draw(font_id, group.name)
