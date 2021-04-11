@@ -24,9 +24,9 @@ from bpy.types import (
     UIList,
 )
 
-from . import data
-from . import utils
-from . import view
+from .. import data
+from .. import utils
+from .. import view
 
 
 class SEQUENCER_PT_edit_breakdown_overview(Panel):
@@ -37,7 +37,7 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.space_data.type == 'SEQUENCE_EDITOR' and view.is_thumbnail_view()
+        return context.space_data.type == 'SEQUENCE_EDITOR' and ui.is_thumbnail_view()
 
     def draw(self, context):
         layout = self.layout

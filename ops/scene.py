@@ -25,7 +25,7 @@ from bpy.props import EnumProperty
 from bpy.types import Operator, Menu
 
 from .. import utils
-from .. import view
+from . import ui
 
 
 class SEQUENCER_OT_add_scene(Operator):
@@ -101,7 +101,7 @@ class SEQUENCER_OT_del_scene_all(Operator):
         # Delete all edit scenes
         edit_breakdown.scenes.clear()
         # Refresh the view in case it was grouped by scene
-        view.fit_thumbnails_in_region()
+        ui.thumbnail_grid.fit_thumbnails_in_region()
         return {'FINISHED'}
 
 

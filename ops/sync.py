@@ -32,7 +32,7 @@ from bpy.types import Operator
 
 from .. import data
 from .. import tools
-from .. import view
+from .. import ui
 
 log = logging.getLogger(__name__)
 
@@ -100,10 +100,10 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         shots = scene.edit_breakdown.shots
 
         # Clear the previous runtime data.
-        view.thumbnail_images.clear()
-        view.thumbnail_size = (0, 0)
-        view.hovered_thumbnail = None
-        view.active_selected_thumbnail = None
+        ui.thumbnail_grid.thumbnail_images.clear()
+        ui.thumbnail_grid.thumbnail_size = (0, 0)
+        ui.thumbnail_grid.hovered_thumbnail = None
+        ui.thumbnail_grid.active_selected_thumbnail = None
 
         # Ensure the thumbnails folder exists and clear old thumbnails.
         addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
@@ -170,11 +170,11 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 insert_pos -= 1
 
         # Update the thumbnails view
-        view.load_edit_thumbnails()
+        ui.thumbnail_grid.load_edit_thumbnails()
         tools.update_selected_shot(scene)
 
         # Position the images according to the available space.
-        view.fit_thumbnails_in_region()
+        ui.thumbnail_grid.fit_thumbnails_in_region()
 
         log.info(f"Syncing done in {(time.time() - time_start):.2f}s")
         return {'FINISHED'}

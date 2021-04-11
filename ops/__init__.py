@@ -21,58 +21,28 @@
 import logging
 import bpy
 
-from .. import view
-
 log = logging.getLogger(__name__)
 
 
 if "sync" in locals():
     import importlib
 
-    importlib.reload(scene)
+#    importlib.reload(scene)
     importlib.reload(shot)
-    importlib.reload(sync)
+#    importlib.reload(sync)
 else:
     from . import scene
     from . import shot
-    from . import sync
-
-
-# UI ##############################################################################################
-
-
-def draw_sequencer_header_extension_left(self, context):
-    if not view.is_thumbnail_view():
-        return
-    layout = self.layout
-    layout.prop(context.scene.edit_breakdown, "view_grouped_by_scene", text="Group by Scene")
-
-
-def draw_sequencer_header_extension_right(self, context):
-    if not view.is_thumbnail_view():
-        return
-    layout = self.layout
-    layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW')  # FILE_REFRESH
-    layout.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE')
-
-
-# Add-on Registration #############################################################################
+#    from . import sync
 
 
 def register():
-    scene.register()
+#    scene.register()
     shot.register()
-    sync.register()
-
-    bpy.types.SEQUENCER_HT_header.prepend(draw_sequencer_header_extension_left)
-    bpy.types.SEQUENCER_HT_header.append(draw_sequencer_header_extension_right)
+#    sync.register()
 
 
 def unregister():
-
-    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_right)
-    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_left)
-
-    sync.unregister()
+#    sync.unregister()
     shot.unregister()
-    scene.unregister()
+#    scene.unregister()

@@ -25,30 +25,23 @@ bl_info = {
     "blender": (2, 91, 0),
     "location": "Video Sequence Editor",
     "description": "Get insight on the complexity of an edit",
-    "doc_url": "https://github.com/britalmeida/blender_addon_edit_breakdown",
+    "doc_url": "https://github.com/britalmeida/edit_breakdown",
     "category": "Sequencer",
 }
 
 import logging
 
-if "draw_utils" in locals():
+if "tools" in locals():
     import importlib
 
     importlib.reload(data)
-    importlib.reload(draw_utils)
     importlib.reload(ops)
-    importlib.reload(panels)
     importlib.reload(tools)
+    importlib.reload(ui)
     importlib.reload(utils)
-    importlib.reload(view)
 else:
     from . import data
-    from . import draw_utils
     from . import ops
-    from . import panels
-    from . import tools
-    from . import utils
-    from . import view
 
 log = logging.getLogger(__name__)
 
@@ -56,11 +49,6 @@ log = logging.getLogger(__name__)
 def register():
     log.info("------Registering Add-on---------------------------")
 
-    data.register()
-    ops.register()
-    panels.register()
-    tools.register()
-    view.register()
 
     log.info("------Done Registering-----------------------------")
 
@@ -69,11 +57,6 @@ def unregister():
 
     log.info("------Unregistering Add-on-------------------------")
 
-    data.unregister()
-    ops.unregister()
-    panels.unregister()
-    tools.unregister()
-    view.unregister()
 
     log.info("------Done Unregistering---------------------------")
 
