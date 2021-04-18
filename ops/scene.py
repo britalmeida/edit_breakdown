@@ -49,6 +49,9 @@ class SEQUENCER_OT_add_scene(Operator):
         new_scene.uuid = uuid.uuid4().hex
         new_scene.name = utils.create_unique_name("Scene", edit_scenes)
 
+        # Generate a random color
+        new_scene.color = utils.get_random_pastel_color_rgb()
+
         # Select it.
         edit_breakdown.active_scene_idx = len(edit_scenes) - 1
 

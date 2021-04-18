@@ -30,6 +30,7 @@ from bpy.props import StringProperty, EnumProperty, IntProperty
 from bpy.types import Operator
 
 from .. import data
+from .. import utils
 
 log = logging.getLogger(__name__)
 
@@ -53,6 +54,9 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
         new_prop = user_configured_props.add()
         # Generate an unique identifier for the property that will never be changed.
         new_prop.identifier = f"cp_{binascii.hexlify(os.urandom(4)).decode()}"
+
+        # Generate a random color
+        new_prop.color = utils.get_random_pastel_color_rgb()
 
         shot_cls = data.SEQUENCER_EditBreakdown_Shot
         data.register_custom_prop(shot_cls, new_prop)

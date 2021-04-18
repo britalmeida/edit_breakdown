@@ -19,7 +19,9 @@
 # <pep8 compliant>
 
 
+import colorsys
 import pathlib
+import random
 import sys
 
 import bpy
@@ -110,3 +112,28 @@ def create_unique_name(base_name: str, existing_objects: list) -> str:
             break
         min_index = num + 1
     return f"{base_name}.{min_index:03d}"
+
+
+def get_random_pastel_color_rgb():
+    """Returns a randomly generated color with high brightness and low saturation."""
+
+    hue = random.random()
+    saturation = random.uniform(0.25, 0.33)
+    brightness = random.uniform(0.75, 0.83)
+
+    color = colorsys.hsv_to_rgb(hue, saturation, brightness)
+    return (color[0], color[1], color[2], 1.0)
+
+
+def get_goldenratio_index_color_rgb(idx):
+    """Returns a color with hue as far apart from the previous colors as possible."""
+
+    # Get a hue using a multiple of the conjugate of the golden ratio
+    hue = 0.1 + (0.618033988749895 * idx)
+    hue -= int(hue)
+
+    saturation = random.uniform(0.25, 0.33)
+    brightness = random.uniform(0.75, 0.83)
+
+    color = colorsys.hsv_to_rgb(hue, saturation, brightness)
+    return (color[0], color[1], color[2], 1.0)

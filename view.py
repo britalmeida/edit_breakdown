@@ -60,10 +60,12 @@ group_by_scene_prev = False
 class ThumbnailGroup:
     def __init__(self):
         self.name = ""
-        self.pos = (0, 0)
+        self.name_pos = (0, 0)
         self.shot_ids = []
         self.shot_rows = 0
         self.scene_uuid = ""
+        self.color = (0,0,0,1)
+        self.color_rect = (0, 0, 0, 0)
 
 
 thumbnail_groups = []
@@ -282,6 +284,7 @@ def fit_thumbnails_in_group():
         group = ThumbnailGroup()
         group.name = eb_scene.name
         group.scene_uuid = eb_scene.uuid
+        group.color = eb_scene.color
         thumbnail_groups.append(group)
 
     # Assign shots to groups
@@ -441,19 +444,25 @@ def fit_thumbnails_in_group():
 
     # Set the position of each group title
     for group_idx, group in enumerate(thumbnail_groups):
-        group.pos = (start_pos_x, start_pos_y_title)
+        group.name_pos = (start_pos_x, start_pos_y_title)
         start_pos_y_title -= group_titles_height + thumbnail_step_y * group.shot_rows
 
         duration_s = 0
         for shot_id in group.shot_ids:
             duration_s += shots[shot_id].duration_seconds
-        group.name += f" (shots: {len(group.shot_ids)}, duration: {duration_s:.1f}s)"
+        group.name += f" (shots: {len(group.shot_ids)}, {duration_s:.1f}s)"
+
+        title_font_size = 12
+        bar_height = thumbnail_step_y * group.shot_rows - spacing[1]/2 + title_font_size
+        title_top = group.name_pos[1] + 12
+        group.color_rect = (start_pos_x-12, title_top - bar_height, 6, bar_height)
+        print(group.color_rect)
 
     # Set the position of each thumbnail
     for img in thumbnail_images:
         row = int(img.pos_in_group / num_images_per_row)
         col = img.pos_in_group % num_images_per_row
-        group_y = thumbnail_groups[img.group_idx].pos[1]
+        group_y = thumbnail_groups[img.group_idx].name_pos[1]
         img.pos = (
             start_pos_x + thumbnail_step_x * col,
             group_y - start_pos_y_thumb - thumbnail_step_y * row,
@@ -508,8 +517,9 @@ def draw_edit_thumbnails():
         blf.size(font_id, 12, 72)
         blf.color(font_id, 0.9, 0.9, 0.9, 1.0)
         for group in thumbnail_groups:
-            blf.position(font_id, group.pos[0], group.pos[1], 0)
+            blf.position(font_id, group.name_pos[0], group.name_pos[1], 0)
             blf.draw(font_id, group.name)
+            draw_utils.draw_boolean_tag(group.color_rect[0:2], group.color_rect[2:4], group.color)
 
     # Render each image.
     draw_utils.draw_thumbnails(thumbnail_images, thumbnail_size)

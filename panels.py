@@ -107,8 +107,16 @@ class SEQUENCER_UL_edit_breakdown_scenes(UIList):
     """UI List for the scenes in the edit."""
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        sel_set = item
-        layout.prop(item, "name", text="", icon='EXPERIMENTAL', emboss=False)
+        eb_scene = item
+
+        split = layout.split(factor=0.12)
+        row = split.row(align=True)
+        row.alignment = 'LEFT'
+        row.prop(eb_scene, "color", text="", emboss=True)
+
+        row = split.row(align=True)
+        row.alignment = 'LEFT'
+        row.prop(eb_scene, "name", text="", emboss=False)
         # if self.layout_type in ('DEFAULT', 'COMPACT'):
         #    layout.prop(item, "is_selected", text="")
 

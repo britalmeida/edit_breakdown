@@ -107,6 +107,15 @@ class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
         name="UUID",
         description="Unique identifier for this scene",
     )
+    color: FloatVectorProperty(
+        name="Color",
+        description="Color used to visually distinguish this scene from others",
+        subtype="COLOR_GAMMA",
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=(0.88, 0.58, 0.38, 1.0),  # Pale peach
+    )
 
 
 class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
