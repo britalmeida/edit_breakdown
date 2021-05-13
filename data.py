@@ -72,7 +72,7 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     data_type: StringProperty(
         name="Type",
         description="The type of data that this property holds",
-        default="BOOLEAN",
+        default="ENUM_FLAG",
     )
     range_min: IntProperty(
         name="Min",
