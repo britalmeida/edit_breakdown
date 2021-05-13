@@ -71,28 +71,6 @@ def select_shot(scene, new_selected_thumbnail):
     else:
         scene.edit_breakdown.selected_shot_idx = -1
 
-    # Select corresponding sequence strip
-    edit_breakdown = scene.edit_breakdown
-    if edit_breakdown.selected_shot_idx != -1:
-        shots = edit_breakdown.shots
-        sel_shot_idx = edit_breakdown.selected_shot_idx
-        strip_name = shots[sel_shot_idx].strip_name
-
-        strips = scene.sequence_editor.sequences
-        eb_strips = [s for s in strips if s.use_for_edit_breakdown]
-
-        # Deselect all strips
-        for s in strips:
-            s.select = False
-            s.select_left_handle = False
-            s.select_right_handle = False
-
-        # Select the strip corresponding to the selected shot, if found
-        strip_match = next((strip for strip in eb_strips if strip.name == strip_name), None)
-        if strip_match:
-            strip_match.select = True
-            strip_match.select_left_handle = True
-
 
 @persistent
 def update_selected_shot(scene):
