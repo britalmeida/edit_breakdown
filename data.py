@@ -133,6 +133,10 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         soft_min=0,
         default=0,
     )
+    thumbnail_file: StringProperty(
+        name="Thumbnail File",
+        description="Filename of the thumbnail image for this shot",
+    )
     strip_name: StringProperty(
         name="Strip Name",
         description="Unequivocally links this shot with a sequencer strip",
@@ -187,7 +191,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_hardcoded_properties(cls):
         """Get a list of the properties that are managed by this add-on (not user defined)"""
-        return ['name', 'frame_start', 'frame_count', 'strip_name', 'scene_uuid']
+        return ['name', 'frame_start', 'frame_count', 'thumbnail_file', 'strip_name', 'scene_uuid']
 
     @classmethod
     def get_custom_properties(cls):
@@ -202,7 +206,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     @classmethod
     def get_csv_export_header(cls):
         """Returns a list of human readable names for the CSV column headers"""
-        attrs = ['Name', 'Start Frame', 'Timestamp', 'Duration (s)', 'Scene']
+        attrs = ['Name', 'Thumbnail File', 'Start Frame', 'Timestamp', 'Duration (s)', 'Scene']
         for prop in cls.get_custom_properties():
             if prop.type == 'INT':
                 attrs.append(f"{prop.name} ({prop.hard_min}-{prop.hard_max})")
@@ -223,6 +227,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
         # Add values of the hardcoded properties
         values = [
             self.name,
+            self.thumbnail_file,
             self.frame_start,
             utils.timestamp_str(self.frame_start),
             self.duration_seconds,
