@@ -29,6 +29,7 @@ import uuid
 
 import bpy
 from bpy.types import Operator
+from bpy.props import BoolProperty
 
 from .. import data
 from .. import tools
@@ -214,9 +215,46 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
         return {'FINISHED'}
 
 
+class SEQUENCER_OT_use_strip_in_edit_breakdown(Operator):
+    bl_idname = "edit_breakdown.use_strip_in_edit_breakdown"
+    bl_label = "Use Strip in Edit Breakdown"
+    bl_description = "Register the currently selected strip(s) for use in the Edit Breakdown"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    should_add: BoolProperty(
+        name="Add",
+        description="Add the strip(s) to the Edit Breakdown if true, otherwise remove",
+        default=True,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        # This operator is available only in the sequencer area of the sequence editor.
+        is_sequence_strips_area = (
+            context.space_data.type == 'SEQUENCE_EDITOR'
+            and (context.space_data.view_type == 'SEQUENCER'
+                or context.space_data.view_type == 'SEQUENCER_PREVIEW')
+        )
+        active_strip = context.scene.sequence_editor.active_strip
+        has_at_least_one_selected_strip = active_strip and active_strip.select
+        return is_sequence_strips_area and has_at_least_one_selected_strip
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        strips = context.scene.sequence_editor.sequences
+
+        for s in strips:
+            if s.select:
+                s.use_for_edit_breakdown = self.should_add
+
+        return {'FINISHED'}
+
+
 classes = (
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
+    SEQUENCER_OT_use_strip_in_edit_breakdown,
 )
 
 
