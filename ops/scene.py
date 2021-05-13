@@ -151,6 +151,7 @@ class SEQUENCER_MT_scenes_context_menu(Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("edit_breakdown.del_scene_all", icon='X')
+        layout.operator("edit_breakdown.assign_shots_to_scene", text="Assign Scene to Shots")
 
 
 classes = (

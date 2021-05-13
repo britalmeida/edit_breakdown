@@ -348,6 +348,49 @@ class UI_OT_shot_properties_tooltip(Operator):
         col.label(text="Note: Custom properties are saved per file (not a user preference)")
 
 
+class SEQUENCER_OT_assign_shots_to_scene(Operator):
+    bl_idname = "edit_breakdown.assign_shots_to_scene"
+    bl_label = "Assign Edit Breakdown Scene"
+    bl_description = "Assign the selected Edit Breakdown scene to the selected timeline strips"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        # This operator is available only in the sequence editor.
+        is_sequence_editor = context.space_data.type == 'SEQUENCE_EDITOR'
+
+        # Needs edit breakdown strips to operate on.
+        strips = context.scene.sequence_editor.sequences
+        selected_eb_strips = [s for s in strips if s.use_for_edit_breakdown and s.select]
+
+        return is_sequence_strips_area and selected_eb_strips
+
+    def execute(self, context):
+        """Called to finish this operator's action."""
+
+        edit_breakdown = context.scene.edit_breakdown
+        selected_eb_scene = edit_breakdown.scenes[edit_breakdown.active_scene_idx]
+
+        shots = edit_breakdown.shots
+        strips = bpy.context.scene.sequence_editor.sequences
+        selected_eb_strips = [s for s in strips if s.use_for_edit_breakdown and s.select]
+
+        # Assign a scene UUID to the shot matching the selected strip(s)
+        for strip in selected_eb_strips:
+
+            # Find the strip's associated shot and scene
+            shot = next((s for s in shots if strip.name == s.strip_name), None)
+
+            # Assign the scene UUID to the shot and update the strip color
+            eb_scene_color = (1.0, 0.0, 0.0)  # Default to a red error color
+            if (shot and selected_eb_scene):
+                shot.scene_uuid = selected_eb_scene.uuid
+                eb_scene_color = selected_eb_scene.color[0:3]
+            strip.color = eb_scene_color
+
+        return {'FINISHED'}
+
+
 classes = (
     SEQUENCER_OT_add_custom_shot_prop,
     SEQUENCER_OT_del_custom_shot_prop,
@@ -355,6 +398,7 @@ classes = (
     SEQUENCER_OT_copy_custom_shot_props,
     SEQUENCER_OT_paste_custom_shot_props,
     UI_OT_shot_properties_tooltip,
+    SEQUENCER_OT_assign_shots_to_scene,
 )
 
 
