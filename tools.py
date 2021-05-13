@@ -302,6 +302,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 return {'FINISHED'}
 
             # Get the current value of the property
+            if not self.tag:
+                return {'FINISHED'}
             tag_rna = hovered_shot.rna_type.properties[self.tag]
             prev_value = hovered_shot.get_prop_value(self.tag)
 
