@@ -107,8 +107,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         # Clear the previous runtime data.
         view.thumbnail_images.clear()
         view.thumbnail_size = (0, 0)
-        view.hovered_thumbnail = None
-        view.active_selected_thumbnail = None
+        view.hovered_thumbnail_idx = -1
 
         # Ensure the thumbnails folder exists and clear old thumbnails.
         addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences

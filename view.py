@@ -48,9 +48,9 @@ class ThumbnailImage:
 
 thumbnail_images = []  # All the loaded thumbnails for an edit.
 thumbnail_size = (0, 0)  # The size in px at which the thumbnails should be displayed.
+original_image_size = (0, 0)
 
-hovered_thumbnail = None
-active_selected_thumbnail = None
+hovered_thumbnail_idx = -1
 
 thumbnail_draw_region = (0, 0, 0, 0)  # Rectangle inside a Blender region where the thumbnails draw
 
@@ -102,6 +102,9 @@ def calculate_thumbnail_draw_region():
 def load_edit_thumbnails():
     """Load all images from disk as resources to be rendered by the GPU"""
 
+    # Ensure there are no cached thumbnails
+    thumbnail_images.clear()
+
     addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
     folder_name = addon_prefs.edit_shots_folder
 
@@ -132,6 +135,12 @@ def load_edit_thumbnails():
         img.shot_idx = i
         if img.id_image.gl_load():
             raise Exception()
+
+    global original_image_size
+    try:
+        original_image_size = thumbnail_images[0].id_image.size
+    except ValueError:
+        original_image_size = (100,100)
 
     log.info(f"Loaded {len(thumbnail_images)} images.")
 
@@ -185,8 +194,8 @@ def fit_thumbnails_in_grid():
 
     # Get the original size and aspect ratio of the images.
     # Assume all images in the edit have the same aspect ratio.
-    original_image_w = thumbnail_images[0].id_image.size[0]
-    original_image_h = thumbnail_images[0].id_image.size[1]
+    original_image_w = original_image_size[0]
+    original_image_h = original_image_size[1]
     image_aspect_ratio = original_image_w / original_image_h
     log.debug(f"Image a.ratio={image_aspect_ratio:.2f} ({original_image_w}x{original_image_h})")
 
@@ -329,8 +338,8 @@ def fit_thumbnails_in_group():
 
     # Get the original size and aspect ratio of the images.
     # Assume all images in the edit have the same aspect ratio.
-    original_image_w = thumbnail_images[0].id_image.size[0]
-    original_image_h = thumbnail_images[0].id_image.size[1]
+    original_image_w = original_image_size[0]
+    original_image_h = original_image_size[1]
     image_aspect_ratio = original_image_w / original_image_h
     log.debug(f"Image a.ratio={image_aspect_ratio:.2f} ({original_image_w}x{original_image_h})")
 
@@ -495,6 +504,14 @@ def draw_edit_thumbnails():
     if not thumbnail_images:
         load_edit_thumbnails()
 
+    # Detect if Blender deleted the thumbnail images, which seems to happen at random during undo.
+    try:
+        if thumbnail_images:  # There might be no images in an empty edit.
+            # Access a Blender image, which will trigger an exception if Blender deleted it.
+            thumbnail_images[0].id_image.bindcode
+    except:
+        load_edit_thumbnails()
+
     # Recalculate the thumbnail positions when the available drawing space changes.
     prev_draw_region = thumbnail_draw_region
     calculate_thumbnail_draw_region()
@@ -601,10 +618,13 @@ def draw_overlay():
 
     draw_tool_active_tag()
 
-    if hovered_thumbnail:
+    if hovered_thumbnail_idx != -1:
+        hovered_thumbnail = thumbnail_images[hovered_thumbnail_idx]
         draw_utils.draw_hover_highlight(hovered_thumbnail.pos, thumbnail_size)
 
-    if active_selected_thumbnail:
+    active_selected_thumbnail_idx = bpy.context.scene.edit_breakdown.selected_shot_idx
+    if active_selected_thumbnail_idx != -1:
+        active_selected_thumbnail = thumbnail_images[active_selected_thumbnail_idx]
         size = (thumbnail_size[0] + 2, thumbnail_size[1] + 2)
         pos = (
             active_selected_thumbnail.pos[0] - 1,
