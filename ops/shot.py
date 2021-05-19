@@ -363,7 +363,7 @@ class SEQUENCER_OT_assign_shots_to_scene(Operator):
         strips = context.scene.sequence_editor.sequences
         selected_eb_strips = [s for s in strips if s.use_for_edit_breakdown and s.select]
 
-        return is_sequence_strips_area and selected_eb_strips
+        return is_sequence_editor and selected_eb_strips
 
     def execute(self, context):
         """Called to finish this operator's action."""
