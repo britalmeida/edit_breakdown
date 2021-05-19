@@ -154,6 +154,8 @@ class SEQUENCER_PT_edit_breakdown_scenes(Panel):
         but_col = row.column(align=True)
         but_col.operator("edit_breakdown.add_scene", icon='ADD', text="")
         but_col.operator("edit_breakdown.del_scene", icon='REMOVE', text="")
+        but_col.separator()
+        but_col.operator("edit_breakdown.assign_shots_to_scene", icon='SEQ_SEQUENCER', text="")
         # Specials menu
         but_col.separator()
         but_col.menu("SEQUENCER_MT_scenes_context_menu", icon='DOWNARROW_HLT', text="")
