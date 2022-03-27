@@ -318,6 +318,11 @@ def fit_thumbnails_in_group():
 
     global thumbnail_size
 
+    # Get scalable constants, based on interface scale and dpi.
+    system_prefs = bpy.context.preferences.system
+    font_size = 12 * system_prefs.ui_scale
+    bar_width = 12 * system_prefs.ui_scale
+
     # Get size of the region containing the thumbnails.
     total_available_w = thumbnail_draw_region[2]
     total_available_h = thumbnail_draw_region[3]
@@ -326,9 +331,9 @@ def fit_thumbnails_in_group():
     log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
     # Get the available size, discounting white space size.
-    group_titles_height = 22
-    min_margin = 40  # Arbitrary 20px minimum for the top,bottom,left and right margins.
-    total_spacing = (150, 40)
+    group_titles_height = 22 * system_prefs.ui_scale
+    min_margin = 40 * system_prefs.ui_scale  # Arbitrary 20px minimum for the top,bottom,left and right margins.
+    total_spacing = (150 * system_prefs.ui_scale, 40 * system_prefs.ui_scale)
     available_w = total_available_w - total_spacing[0]
     available_h = total_available_h - total_spacing[1] - group_titles_height * len(thumbnail_groups)
     max_thumb_size = (
@@ -444,7 +449,7 @@ def fit_thumbnails_in_group():
 
     start_pos_x = start_w + margins[0]
     start_pos_y_title = total_available_h - margins[1] - group_titles_height
-    start_pos_y_thumb = thumbnail_size[1] + 6
+    start_pos_y_thumb = thumbnail_size[1] + 6 * system_prefs.ui_scale
     thumbnail_step_x = thumbnail_size[0] + spacing[0]
     thumbnail_step_y = thumbnail_size[1] + spacing[1]
     last_start_pos_x = start_w + math.ceil(
@@ -461,10 +466,10 @@ def fit_thumbnails_in_group():
             duration_s += shots[shot_id].duration_seconds
         group.name += f" (shots: {len(group.shot_ids)}, {duration_s:.1f}s)"
 
-        title_font_size = 12
+        title_font_size = font_size
         bar_height = thumbnail_step_y * group.shot_rows - spacing[1]/2 + title_font_size
-        title_top = group.name_pos[1] + 12
-        group.color_rect = (start_pos_x-12, title_top - bar_height, 6, bar_height)
+        title_top = group.name_pos[1] + font_size
+        group.color_rect = (start_pos_x-bar_width, title_top - bar_height, bar_width*0.5, bar_height)
         print(group.color_rect)
 
     # Set the position of each thumbnail
@@ -531,7 +536,9 @@ def draw_edit_thumbnails():
 
     if group_by_scene:
         font_id = 0  # Default font.
-        blf.size(font_id, 12, 72)
+        system_prefs = bpy.context.preferences.system
+        font_size = 12 * system_prefs.ui_scale
+        blf.size(font_id, font_size, 72)
         blf.color(font_id, 0.9, 0.9, 0.9, 1.0)
         for group in thumbnail_groups:
             blf.position(font_id, group.name_pos[0], group.name_pos[1], 0)
