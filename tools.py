@@ -46,11 +46,8 @@ def set_hovered_thumbnail(mouse_x, mouse_y):
 
     view.hovered_thumbnail_idx = -1
     for idx, thumb in enumerate(view.thumbnail_images):
-        if (
-            mouse_x >= thumb.pos[0]
-            and mouse_x <= thumb.pos[0] + view.thumbnail_size[0]
-            and mouse_y >= thumb.pos[1]
-            and mouse_y <= thumb.pos[1] + view.thumbnail_size[1]
+        if (thumb.pos[0] <= mouse_x <= thumb.pos[0] + view.thumbnail_size[0]
+            and thumb.pos[1] <= mouse_y <= thumb.pos[1] + view.thumbnail_size[1]
         ):
             view.hovered_thumbnail_idx = idx
             return
@@ -194,11 +191,11 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 prop_ids.append(prop.identifier)
 
         if prop_ids:
-            curent_int_value = self["tag"]
+            current_int_value = self["tag"]
 
             for i, prop_id in enumerate(prop_ids):
                 # If the backup enum value as string was not set yet, set it
-                if not SEQUENCER_OT_thumbnail_tag.tag_str and i == curent_int_value:
+                if not SEQUENCER_OT_thumbnail_tag.tag_str and i == current_int_value:
                     SEQUENCER_OT_thumbnail_tag.tag_str = prop_id
                     return i
                 # Found prop matching the identifier?

@@ -64,7 +64,7 @@ class ThumbnailGroup:
         self.shot_ids = []
         self.shot_rows = 0
         self.scene_uuid = ""
-        self.color = (0,0,0,1)
+        self.color = (0, 0, 0, 1)
         self.color_rect = (0, 0, 0, 0)
 
 
@@ -140,7 +140,7 @@ def load_edit_thumbnails():
     try:
         original_image_size = thumbnail_images[0].id_image.size
     except ValueError:
-        original_image_size = (100,100)
+        original_image_size = (100, 100)
 
     log.info(f"Loaded {len(thumbnail_images)} images.")
 
