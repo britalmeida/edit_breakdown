@@ -141,8 +141,8 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 new_shot = shots.add()
 
                 new_shot.name = strip.name
-                new_shot.frame_start = strip.frame_final_start
-                new_shot.frame_count = strip.frame_final_end - strip.frame_final_start
+                new_shot.frame_start = int(strip.frame_final_start)
+                new_shot.frame_count = int(strip.frame_final_end - strip.frame_final_start)
 
                 # Associate the shot with the sequence by name
                 new_shot.strip_name = strip.name
@@ -156,8 +156,8 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             if strip_match:
                 # Update data.
                 log.debug(f"Update shot info {i} - {shot.name}")
-                shot.frame_start = strip_match.frame_start
-                shot.frame_count = strip_match.frame_final_end - strip_match.frame_final_start
+                shot.frame_start = int(strip_match.frame_start)
+                shot.frame_count = int(strip_match.frame_final_end - strip_match.frame_final_start)
                 shot.thumbnail_file = f'{str(get_thumbnail_frame(strip_match))}.jpg'
             else:
                 log.debug(f"Deleting shot {i} - {shot.name}")
