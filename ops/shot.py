@@ -383,7 +383,7 @@ class SEQUENCER_OT_assign_shots_to_scene(Operator):
 
             # Assign the scene UUID to the shot and update the strip color
             eb_scene_color = (1.0, 0.0, 0.0)  # Default to a red error color
-            if (shot and selected_eb_scene):
+            if shot and selected_eb_scene:
                 shot.scene_uuid = selected_eb_scene.uuid
                 eb_scene_color = selected_eb_scene.color[0:3]
             strip.color = eb_scene_color

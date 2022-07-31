@@ -25,7 +25,6 @@ import logging
 import math
 import pathlib
 import time
-import uuid
 
 import bpy
 from bpy.types import Operator
@@ -38,15 +37,16 @@ from .. import view
 log = logging.getLogger(__name__)
 
 
+def get_thumbnail_frame(strip):
+    strip_mid_frame = math.floor(strip.frame_final_duration / 2)
+    return strip.frame_final_start + strip_mid_frame
+
+
 class SEQUENCER_OT_sync_edit_breakdown(Operator):
     bl_idname = "edit_breakdown.sync_edit_breakdown"
     bl_label = "Sync Edit Breakdown"
     bl_description = "Ensure the edit breakdown is up-to-date with the edit"
     bl_options = {'REGISTER', 'UNDO'}
-
-    def get_thumbnail_frame(self, strip):
-        strip_mid_frame = math.floor(strip.frame_final_duration / 2)
-        return strip.frame_final_start + strip_mid_frame
 
     @contextlib.contextmanager
     def override_render_settings(self, context, thumbnail_width=256):
@@ -122,7 +122,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         log.info("Creating thumbnails...")
         with self.override_render_settings(context):
             for strip in eb_strips:
-                scene.frame_current = self.get_thumbnail_frame(strip)
+                scene.frame_current = get_thumbnail_frame(strip)
                 bpy.ops.render.render()
                 file_name = f'{str(scene.frame_current)}.jpg'
                 self.save_render(bpy.data.images['Render Result'], file_name)
@@ -158,7 +158,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 log.debug(f"Update shot info {i} - {shot.name}")
                 shot.frame_start = strip_match.frame_start
                 shot.frame_count = strip_match.frame_final_end - strip_match.frame_final_start
-                shot.thumbnail_file = f'{str(self.get_thumbnail_frame(strip_match))}.jpg'
+                shot.thumbnail_file = f'{str(get_thumbnail_frame(strip_match))}.jpg'
             else:
                 log.debug(f"Deleting shot {i} - {shot.name}")
                 shots.remove(i)

@@ -122,7 +122,7 @@ def get_random_pastel_color_rgb():
     brightness = random.uniform(0.75, 0.83)
 
     color = colorsys.hsv_to_rgb(hue, saturation, brightness)
-    return (color[0], color[1], color[2], 1.0)
+    return color[0], color[1], color[2], 1.0
 
 
 def get_goldenratio_index_color_rgb(idx):
@@ -136,4 +136,4 @@ def get_goldenratio_index_color_rgb(idx):
     brightness = random.uniform(0.75, 0.83)
 
     color = colorsys.hsv_to_rgb(hue, saturation, brightness)
-    return (color[0], color[1], color[2], 1.0)
+    return color[0], color[1], color[2], 1.0

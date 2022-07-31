@@ -27,7 +27,6 @@ from bpy.types import (
     WorkSpaceTool,
 )
 from bpy.props import (
-    BoolProperty,
     EnumProperty,
     IntProperty,
 )

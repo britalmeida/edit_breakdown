@@ -146,7 +146,7 @@ def load_edit_thumbnails():
 
 
 def fit_thumbnails_in_region():
-    """Calculate the thumbnails' size and where to render each one so they fit the given region"""
+    """Calculate the thumbnails' size and where to render each one so that they fit the given region"""
 
     # If there are no images to fit, we're done!
     edit_breakdown = bpy.context.scene.edit_breakdown
@@ -164,7 +164,7 @@ def fit_thumbnails_in_region():
 
 
 def fit_thumbnails_in_grid():
-    """Calculate the thumbnails' size and where to render each one so they fit the given region
+    """Calculate the thumbnails' size and where to render each one so that they fit the given region
 
     The thumbnail size is roughly calculated by dividing the available region area by the number
     of images and preserving the image aspect ratio. However, this calculation will be off as
@@ -252,7 +252,7 @@ def fit_thumbnails_in_grid():
         log.debug(f"margins={margin:.3f}")
         margin = math.floor(margin)
 
-        return (margin, spacing)
+        return margin, spacing
 
     log.debug(f"X")
     space_w = calculate_spacing(total_available_w, thumbnail_size[0], num_images_per_row)
@@ -331,9 +331,9 @@ def fit_thumbnails_in_group():
     log.debug(f"Region w:{total_available_w} h:{total_available_h}")
 
     # Get the available size, discounting white space size.
-    group_titles_height = 22 * system_prefs.ui_scale
-    min_margin = 40 * system_prefs.ui_scale  # Arbitrary 20px minimum for the top,bottom,left and right margins.
-    total_spacing = (150 * system_prefs.ui_scale, 40 * system_prefs.ui_scale)
+    group_titles_height = round(22 * system_prefs.ui_scale)
+    min_margin = round(40 * system_prefs.ui_scale)  # Arbitrary 20px minimum for the top,bottom,left and right margins.
+    total_spacing = (round(150 * system_prefs.ui_scale), round(40 * system_prefs.ui_scale))
     available_w = total_available_w - total_spacing[0]
     available_h = total_available_h - total_spacing[1] - group_titles_height * len(thumbnail_groups)
     max_thumb_size = (
@@ -431,7 +431,7 @@ def fit_thumbnails_in_group():
         log.debug(f"margins={margin:.3f}")
         margin = math.floor(margin)
 
-        return (margin, spacing)
+        return margin, spacing
 
     log.debug(f"X")
     available_space = total_available_w - thumbnail_size[0] * num_images_per_row
@@ -510,12 +510,13 @@ def draw_edit_thumbnails():
         load_edit_thumbnails()
 
     # Detect if Blender deleted the thumbnail images, which seems to happen at random during undo.
-    try:
-        if thumbnail_images:  # There might be no images in an empty edit.
-            # Access a Blender image, which will trigger an exception if Blender deleted it.
+    if thumbnail_images:  # There might be no images in an empty edit.
+        # Access a Blender image, which will trigger an exception if Blender deleted it.
+        try:
+            # noinspection PyStatementEffect
             thumbnail_images[0].id_image.bindcode
-    except:
-        load_edit_thumbnails()
+        except ReferenceError:  # StructRNA of type Image has been removed
+            load_edit_thumbnails()
 
     # Recalculate the thumbnail positions when the available drawing space changes.
     prev_draw_region = thumbnail_draw_region
@@ -577,7 +578,7 @@ def draw_tool_active_tag():
             alpha_span = 1.0 - 0.15
             alpha *= 0.15 + (alpha_span / val_span) * (value - prop_config.range_min)
 
-        return (base_color[0], base_color[1], base_color[2], alpha)
+        return base_color[0], base_color[1], base_color[2], alpha
 
     active_tool = bpy.context.workspace.tools.from_space_sequencer('PREVIEW')
     if active_tool and active_tool.idname == "edit_breakdown.thumbnail_tag_tool":
