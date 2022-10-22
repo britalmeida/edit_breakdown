@@ -31,45 +31,61 @@ from . import draw_utils
 log = logging.getLogger(__name__)
 
 
-# Drawing Thumbnail Images ########################################################################
-
+# Thumbnail and Groups UI Data ####################################################################
 
 class ThumbnailImage:
-    """Displayed thumbnail data"""
+    """UI data necessary to render a thumbnail instance.
 
+    A single shot may have its thumbnail rendered more than once on screen or not at all (e.g. due
+    to grouping). Therefore, a shot has 0-many ThumbnailImages.
+    """
     def __init__(self):
+        # Image Display
         self.id_image = None  # A Blender ID Image, which can be rendered by bgl.
         self.pos = (0, 0)  # Position in px where the image should be displayed within a region.
-        self.name = ""
+        # Represented Object (shot/asset)
         self.shot_idx = -1
+        # Grouped View
         self.group_idx = -1
         self.pos_in_group = -1
-
-
-thumbnail_images = []  # All the loaded thumbnails for an edit.
-thumbnail_size = (0, 0)  # The size in px at which the thumbnails should be displayed.
-original_image_size = (0, 0)
-
-hovered_thumbnail_idx = -1
-
-thumbnail_draw_region = (0, 0, 0, 0)  # Rectangle inside a Blender region where the thumbnails draw
-
-group_by_scene_prev = False
+        # ??
+        self.name = ""
 
 
 class ThumbnailGroup:
+    """UI data for a container of thumbnails, with a drawable name and a colorful rectangle."""
     def __init__(self):
+        # Group Title
         self.name = ""
         self.name_pos = (0, 0)
-        self.shot_ids = []
-        self.shot_rows = 0
-        self.scene_uuid = ""
+        # Colorful Rectangle
         self.color = (0, 0, 0, 1)
         self.color_rect = (0, 0, 0, 0)
+        # Contained Thumbnails
+        self.shot_ids = []
+        self.shot_rows = 0
+        # Represented Object (grouping criteria)
+        self.scene_uuid = ""
 
 
+# View Data #######################################################################################
+
+# Thumbnail Rendering
+thumbnail_images = []  # All the loaded thumbnails for an edit.
+thumbnail_size = (0, 0)  # The size in px at which the thumbnails should be displayed.
+original_image_size = (0, 0)
+thumbnail_draw_region = (0, 0, 0, 0)  # Rectangle inside a Blender region where the thumbnails draw
+
+# Grouped View
 thumbnail_groups = []
+summary_text = ""
 
+# State
+hovered_thumbnail_idx = -1
+group_by_scene_prev = False
+
+
+# Drawing Thumbnail Images ########################################################################
 
 def calculate_thumbnail_draw_region():
 
@@ -146,7 +162,7 @@ def load_edit_thumbnails():
 
 
 def fit_thumbnails_in_region():
-    """Calculate the thumbnails' size and where to render each one so that they fit the given region"""
+    """Calculate the thumbnails' size and where to render each one, so they fit the given region"""
 
     # If there are no images to fit, we're done!
     edit_breakdown = bpy.context.scene.edit_breakdown
@@ -624,12 +640,15 @@ def draw_overlay():
     if not is_thumbnail_view():
         return
 
+    # Draw property values from the Tag Tool on top of each thumbnail.
     draw_tool_active_tag()
 
+    # Draw mouseover highlight.
     if hovered_thumbnail_idx != -1:
         hovered_thumbnail = thumbnail_images[hovered_thumbnail_idx]
         draw_utils.draw_hover_highlight(hovered_thumbnail.pos, thumbnail_size)
 
+    # Draw selection highlight.
     active_selected_thumbnail_idx = bpy.context.scene.edit_breakdown.selected_shot_idx
     if active_selected_thumbnail_idx != -1:
         active_selected_thumbnail = thumbnail_images[active_selected_thumbnail_idx]
@@ -652,7 +671,6 @@ def register():
     draw_handles.append(space.draw_handler_add(draw_background, (), 'PREVIEW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_edit_thumbnails, (), 'PREVIEW', 'POST_PIXEL'))
     draw_handles.append(space.draw_handler_add(draw_overlay, (), 'PREVIEW', 'POST_PIXEL'))
-    # draw_handles.append(space.draw_handler_add(draw_text, (), 'PREVIEW', 'POST_PIXEL'))
 
 
 def unregister():
