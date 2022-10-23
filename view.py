@@ -505,14 +505,13 @@ def is_thumbnail_view():
     """True if the current space has the edit breakdown view enabled.
 
     Note: I found no way of making a new space or mode toggle for this
-    add-on, therefore, I'm hijacking the Display Channels toggle as it
-    seems to be a little used option with no performance impact on the
-    sequencer. This is less than ideal as it breaks the Display Channels
-    functionality and doesn't make for a good user experience.
+    add-on, therefore, I'm hijacking the Display Frames toggle as it only
+    seems to be used in Sequencer view (not Preview view).
+    This is less than ideal as it takes existing data to have additional meaning.
     TODO: whenever possible, switch the thumbnail view to its own editor
     space or add a toggle to the region/area/space if they get support
     for ID properties."""
-    return bpy.context.space_data.preview_channels == 'COLOR'
+    return bpy.context.space_data.show_frames
 
 
 def draw_edit_thumbnails():

@@ -460,6 +460,13 @@ def register():
         description="If this strip should be included as a shot in the edit breakdown view",
     )
 
+    # TODO Extending space data doesn't work?
+    #bpy.types.SpaceSequenceEditor.show_edit_breakdown_view = BoolProperty(
+    #    name="Show Edit Breakdown",
+    #    default=False,
+    #    description="Display the Edit Breakdown thumbnail grid view",
+    #)
+
     bpy.app.handlers.load_pre.append(unregister_custom_properties)
     bpy.app.handlers.load_post.append(register_custom_properties)
 
@@ -469,6 +476,7 @@ def unregister():
     bpy.app.handlers.load_pre.remove(unregister_custom_properties)
     bpy.app.handlers.load_post.remove(register_custom_properties)
 
+    #del bpy.types.SpaceSequenceEditor.show_edit_breakdown_view
     del bpy.types.Sequence.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 

@@ -253,6 +253,17 @@ class SEQUENCER_OT_use_strip_in_edit_breakdown(Operator):
         return {'FINISHED'}
 
 
+def strip_menu_draw(self, context):
+    if context.space_data.view_type == 'PREVIEW':
+        return
+
+    layout = self.layout
+    layout.separator()
+    layout.operator("edit_breakdown.use_strip_in_edit_breakdown", text="Add to Edit Breakdown")
+    layout.operator("edit_breakdown.use_strip_in_edit_breakdown",
+                    text="Remove from Edit Breakdown").should_add = False
+
+
 classes = (
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
@@ -265,8 +276,12 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    bpy.types.SEQUENCER_MT_strip.append(strip_menu_draw)
+
 
 def unregister():
+
+    bpy.types.SEQUENCER_MT_strip.remove(strip_menu_draw)
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

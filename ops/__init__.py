@@ -41,19 +41,20 @@ else:
 # UI ##############################################################################################
 
 
-def draw_sequencer_header_extension_left(self, context):
-    if not view.is_thumbnail_view():
-        return
-    layout = self.layout
-    layout.prop(context.scene.edit_breakdown, "view_grouped_by_scene", text="Group by Scene")
-
-
 def draw_sequencer_header_extension_right(self, context):
-    if not view.is_thumbnail_view():
+    """"Draw controls at the right end of the Sequence Preview Editor"""
+    editor = context.space_data
+    if not(editor.type == 'SEQUENCE_EDITOR' and editor.view_type == 'PREVIEW'):
         return
+
     layout = self.layout
-    layout.operator("edit_breakdown.sync_edit_breakdown", icon='SEQ_SPLITVIEW')  # FILE_REFRESH
-    layout.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE')
+    row = layout.row(align=True)
+    row.prop(editor, "show_frames", text="", icon='SEQ_SPLITVIEW')
+
+    sub = row.row(align=True)
+    sub.active = view.is_thumbnail_view()
+    sub.popover(panel="SEQUENCER_PT_edit_breakdown_view_settings", text="")
+    sub.operator("edit_breakdown.sync_edit_breakdown", icon='FILE_REFRESH', text="")
 
 
 # Add-on Registration #############################################################################
@@ -64,14 +65,12 @@ def register():
     shot.register()
     sync.register()
 
-    bpy.types.SEQUENCER_HT_header.prepend(draw_sequencer_header_extension_left)
     bpy.types.SEQUENCER_HT_header.append(draw_sequencer_header_extension_right)
 
 
 def unregister():
 
     bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_right)
-    bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_left)
 
     sync.unregister()
     shot.unregister()

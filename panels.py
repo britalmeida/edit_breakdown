@@ -29,6 +29,22 @@ from . import utils
 from . import view
 
 
+class SEQUENCER_PT_edit_breakdown_view_settings(Panel):
+    """"Popover with Edit Breakdown view settings"""
+    bl_label = "Edit Breakdown View"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'HEADER'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.type == 'SEQUENCE_EDITOR' and \
+               context.space_data.view_type == 'PREVIEW'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(context.scene.edit_breakdown, "view_grouped_by_scene", text="Group by Scene")
+
+
 class SEQUENCER_PT_edit_breakdown_overview(Panel):
     bl_label = "Overview"
     bl_category = "Edit Breakdown - Shot"
@@ -45,6 +61,10 @@ class SEQUENCER_PT_edit_breakdown_overview(Panel):
         layout.use_property_decorate = False
 
         edit_breakdown = context.scene.edit_breakdown
+
+        row = layout.row()
+        row.operator("edit_breakdown.sync_edit_breakdown", icon='FILE_REFRESH', text="Sync with edit")
+        row.operator("edit_breakdown.copy_edit_breakdown_as_csv", icon='FILE', text="Copy to CSV")
 
         col = layout.column(align=True)
         utils.draw_stat_label(col, "Scenes", f"{len(edit_breakdown.scenes)}")
@@ -260,6 +280,7 @@ class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):
 # Add-on Registration #############################################################################
 
 classes = (
+    SEQUENCER_PT_edit_breakdown_view_settings,
     SEQUENCER_PT_edit_breakdown_overview,
     SEQUENCER_PT_edit_breakdown_shot,
     SEQUENCER_UL_edit_breakdown_scenes,

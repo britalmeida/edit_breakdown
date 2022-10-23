@@ -78,6 +78,7 @@ class SEQUENCER_OT_del_custom_shot_prop(Operator):
 
     @classmethod
     def poll(cls, context):
+        # TODO Operator is available when the property to edit is configured.
         return True
 
     def execute(self, context):
@@ -153,6 +154,7 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
 
     @classmethod
     def poll(cls, context):
+        # TODO Operator is available when the property to edit is configured.
         return True
 
     def draw(self, context):
@@ -297,7 +299,7 @@ class SEQUENCER_OT_paste_custom_shot_props(Operator):
     bl_idname = "edit_breakdown.paste_custom_shot_props"
     bl_label = "Paste Custom Properties Configuration"
     bl_description = "Paste the configuration of custom properties for shots"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -305,7 +307,7 @@ class SEQUENCER_OT_paste_custom_shot_props(Operator):
 
     def execute(self, context):
         """Called to finish this operator's action."""
-
+        # TODO
         return {'FINISHED'}
 
 
