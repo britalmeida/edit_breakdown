@@ -106,7 +106,8 @@ class SEQUENCER_PT_edit_breakdown_shot(Panel):
 class SEQUENCER_UL_edit_breakdown_scenes(UIList):
     """UI List for the scenes in the edit."""
 
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_property,
+                  index: int = 0, flt_flag: int = 0):
         eb_scene = item
 
         split = layout.split(factor=0.12)
@@ -117,8 +118,6 @@ class SEQUENCER_UL_edit_breakdown_scenes(UIList):
         row = split.row(align=True)
         row.alignment = 'LEFT'
         row.prop(eb_scene, "name", text="", emboss=False)
-        # if self.layout_type in ('DEFAULT', 'COMPACT'):
-        #    layout.prop(item, "is_selected", text="")
 
 
 class SEQUENCER_PT_edit_breakdown_scenes(Panel):
@@ -182,8 +181,7 @@ class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):
         layout.use_property_decorate = False
 
         col_props = layout.column()
-        row = col_props.row()
-        # 'Add Property' button
+        # 'Add Shot Property' button
         row = col_props.row()
         row.operator("edit_breakdown.add_custom_shot_prop")
         # Actions
@@ -243,7 +241,7 @@ class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):
             ).prop_id = prop.identifier
 
             # Extra details for specific prop types
-            if prop.data_type == 'INT':
+            if prop.data_type in ('INT', 'ENUM_VAL', 'ENUM_FLAG'):
                 row = box.row()
                 split = row.split(factor=0.1)
                 row = split.row(align=True)
@@ -252,18 +250,11 @@ class SEQUENCER_PT_edit_breakdown_shot_custom_props(Panel):
                 split = row.split(factor=1.0)
                 row = split.row(align=True)
                 row.alignment = 'LEFT'
-                row.label(text=f"Min: {prop.range_min}  Max: {prop.range_max}")
 
-            elif prop.data_type == 'ENUM_VAL' or prop.data_type == 'ENUM_FLAG':
-                row = box.row()
-                split = row.split(factor=0.1)
-                row = split.row(align=True)
-                # Leave area under color empty, for alignment
-                row = split.row(align=True)
-                split = row.split(factor=1.0)
-                row = split.row(align=True)
-                row.alignment = 'LEFT'
-                row.label(text=str(prop.enum_items))
+                if prop.data_type == 'INT':
+                    row.label(text=f"Min: {prop.range_min}  Max: {prop.range_max}")
+                else:  # Enum val or flag
+                    row.label(text=str(prop.enum_items))
 
 
 # Add-on Registration #############################################################################

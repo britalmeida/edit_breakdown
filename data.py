@@ -86,17 +86,18 @@ class SEQUENCER_EditBreakdown_CustomProp(PropertyGroup):
     )
     enum_items: StringProperty(
         name="Items",
-        description="Possible values for the property if it is an enum. Comma separated list of options",
+        description="Possible values for the property if it is an enum. "
+                    "Comma separated list of options",
         default="Option 1, Option 2",
     )
     color: FloatVectorProperty(
         name="Color",
         description="Associated color to be used by the Tag tool",
         subtype="COLOR_GAMMA",
-        size=4,
+        size=[4],
         min=0.0,
         max=1.0,
-        default=(0.4, 0.6, 0.75, 1.0),  # Some blue
+        default=[0.4, 0.6, 0.75, 1.0],  # Some blue
     )
 
 
@@ -111,10 +112,10 @@ class SEQUENCER_EditBreakdown_Scene(PropertyGroup):
         name="Color",
         description="Color used to visually distinguish this scene from others",
         subtype="COLOR_GAMMA",
-        size=4,
+        size=[4],
         min=0.0,
         max=1.0,
-        default=(0.88, 0.58, 0.38, 1.0),  # Pale peach
+        default=[0.88, 0.58, 0.38, 1.0],  # Pale peach
     )
 
 
@@ -128,7 +129,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
     )
     frame_count: IntProperty(
         name="Frame Count",
-        description="Total number of frame this shot has",
+        description="Total number of frames this shot has",
         subtype="TIME",
         soft_min=0,
         default=0,
@@ -205,7 +206,7 @@ class SEQUENCER_EditBreakdown_Shot(PropertyGroup):
 
     @classmethod
     def get_csv_export_header(cls):
-        """Returns a list of human readable names for the CSV column headers"""
+        """Returns a list of human-readable names for the CSV column headers"""
         attrs = ['Name', 'Thumbnail File', 'Start Frame', 'Timestamp', 'Duration (s)', 'Scene']
         for prop in cls.get_custom_properties():
             if prop.type == 'INT':
@@ -348,6 +349,7 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 
 def register_custom_prop(data_cls, prop):
+    prop_ctor = ""
     extra_prop_config = ""
     if prop.data_type == 'BOOLEAN':
         prop_ctor = "BoolProperty"

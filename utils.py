@@ -25,6 +25,7 @@ import random
 import sys
 
 import bpy
+from bpy.types import UILayout
 
 
 def timestamp_str(num_frames: int) -> str:
@@ -43,7 +44,7 @@ def timestamp_str(num_frames: int) -> str:
     return f"{sign}{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
 
 
-def draw_frame_prop(layout: bpy.types.UILayout, prop_label: str, prop_value: int):
+def draw_frame_prop(layout: UILayout, prop_label: str, prop_value: int) -> None:
     """Add a property to Blender's UI, showing timestamp and number of frames"""
 
     split = layout.split(factor=0.4, align=True)
@@ -55,7 +56,7 @@ def draw_frame_prop(layout: bpy.types.UILayout, prop_label: str, prop_value: int
     split.label(text=f"{prop_value} ")
 
 
-def draw_stat_label(layout: bpy.types.UILayout, label: str, value: str):
+def draw_stat_label(layout: UILayout, label: str, value: str) -> None:
     """Add a label-value pair to Blender's UI, aligned as a split property"""
 
     split = layout.split(factor=0.4, align=True)
@@ -84,7 +85,7 @@ def get_datadir() -> pathlib.Path:
 
 
 def create_unique_name(base_name: str, existing_objects: list) -> str:
-    """Returns a name not yet present in existing_names which starts with base_name.
+    """Returns a name not yet present in existing_objects which starts with base_name.
 
     Names follow Blender convention: base_name, base_name.001, base_name.002, etc.
     e.g.: create_unique_name("Object", all_objects)

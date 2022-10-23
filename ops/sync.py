@@ -187,7 +187,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
     bl_idname = "edit_breakdown.copy_edit_breakdown_as_csv"
     bl_label = "Copy Edit Breakdown as CSV"
-    bl_description = "Copy Edit Breakdown data as CSV in the clipboard"
+    bl_description = "Copy Edit Breakdown data as CSV to the clipboard"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -198,7 +198,6 @@ class SEQUENCER_OT_copy_edit_breakdown_as_csv(Operator):
         """Called to finish this operator's action."""
 
         log.info('Saving CSV to clipboard')
-        sequence_ed = context.scene.sequence_editor
         shots = context.scene.edit_breakdown.shots
 
         # Create shot list that becomes a CSV, starting with the header
@@ -235,8 +234,8 @@ class SEQUENCER_OT_use_strip_in_edit_breakdown(Operator):
         # This operator is available only in the sequencer area of the sequence editor.
         is_sequence_strips_area = (
             context.space_data.type == 'SEQUENCE_EDITOR'
-            and (context.space_data.view_type == 'SEQUENCER'
-                or context.space_data.view_type == 'SEQUENCER_PREVIEW')
+            and (context.space_data.view_type == 'SEQUENCER' or
+                 context.space_data.view_type == 'SEQUENCER_PREVIEW')
         )
         active_strip = context.scene.sequence_editor.active_strip
         has_at_least_one_selected_strip = active_strip and active_strip.select

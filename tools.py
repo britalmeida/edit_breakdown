@@ -45,15 +45,14 @@ def set_hovered_thumbnail(mouse_x, mouse_y):
 
     view.hovered_thumbnail_idx = -1
     for idx, thumb in enumerate(view.thumbnail_images):
-        if (thumb.pos[0] <= mouse_x <= thumb.pos[0] + view.thumbnail_size[0]
-            and thumb.pos[1] <= mouse_y <= thumb.pos[1] + view.thumbnail_size[1]
-        ):
+        if (thumb.pos[0] <= mouse_x <= thumb.pos[0] + view.thumbnail_size[0] and
+                thumb.pos[1] <= mouse_y <= thumb.pos[1] + view.thumbnail_size[1]):
             view.hovered_thumbnail_idx = idx
             return
 
 
 def select_shot(scene, new_selected_thumbnail_idx):
-    """Select the shot matching the given thumbnail (may be None)."""
+    """Select the shot matching the given thumbnail (can be None)."""
 
     # Update Blender persisted data
     scene.edit_breakdown.selected_shot_idx = new_selected_thumbnail_idx
@@ -91,10 +90,10 @@ class SEQUENCER_OT_thumbnail_select(Operator):
             # Determine the thumbnail that is currently under the mouse (if any).
             set_hovered_thumbnail(event.mouse_region_x, event.mouse_region_y)
 
-            # Request a redraw so that the mouse hover effect is updated.
+            # Request redraw so that the mouse hover effect is updated.
             context.area.tag_redraw()
 
-            # Workaround for undo transaction spam
+            # Workaround for undo transaction spam.
             # Return 'CANCELLED' instead of 'FINISHED' to avoid pushing a transaction onto the undo
             # stack, which does get created even though this is just invoke() and there was no
             # blender data change.
@@ -107,17 +106,17 @@ class SEQUENCER_OT_thumbnail_select(Operator):
             mouse_x = event.mouse_region_x
             mouse_y = event.mouse_region_y
             if (
-                mouse_x < view.thumbnail_draw_region[0]
-                or mouse_y < view.thumbnail_draw_region[1]
-                or mouse_x > view.thumbnail_draw_region[2]
-                or mouse_y > view.thumbnail_draw_region[3]
+                    mouse_x < view.thumbnail_draw_region[0] or
+                    mouse_y < view.thumbnail_draw_region[1] or
+                    mouse_x > view.thumbnail_draw_region[2] or
+                    mouse_y > view.thumbnail_draw_region[3]
             ):
                 # See "Workaround for undo transaction spam".
                 return {'CANCELLED'}
 
             self.execute(context)
 
-        # Request a redraw so that the selection effect is updated.
+        # Request redraw so that the selection effect is updated.
         context.area.tag_redraw()
 
         return {'FINISHED'}
@@ -159,7 +158,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
             if prop.data_type in ['BOOLEAN', 'INT', 'ENUM_FLAG', 'ENUM_VAL']:
                 enum_items.append((prop.identifier, prop.name, prop.description))
 
-        # Store the enum items in this class to workaround a bug where Blender mangles the strings.
+        # Store the enum items in this class to work around a bug where Blender mangles the strings.
         SEQUENCER_OT_thumbnail_tag.tag_enum_items = enum_items
 
         return SEQUENCER_OT_thumbnail_tag.tag_enum_items
@@ -182,7 +181,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         """Get the current value of the tag enum prop by matching it with tag_str"""
 
         # Collect the IDs of all taggable custom properties.
-        # Note: don't re-use the IDs stored in the class variable to workaround the string mangling.
+        # Note: don't re-use IDs stored in the class variable to work around the string mangling.
         prop_ids = []
         user_configured_props = bpy.context.scene.edit_breakdown.shot_custom_props
         for prop in user_configured_props:
@@ -266,10 +265,10 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         mouse_x = event.mouse_region_x
         mouse_y = event.mouse_region_y
         if (
-            mouse_x < view.thumbnail_draw_region[0]
-            or mouse_y < view.thumbnail_draw_region[1]
-            or mouse_x > view.thumbnail_draw_region[2]
-            or mouse_y > view.thumbnail_draw_region[3]
+                mouse_x < view.thumbnail_draw_region[0] or
+                mouse_y < view.thumbnail_draw_region[1] or
+                mouse_x > view.thumbnail_draw_region[2] or
+                mouse_y > view.thumbnail_draw_region[3]
         ):
             return {'CANCELLED'}
 
@@ -308,9 +307,9 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
 
         # Sanitize direct value assignment
         elif event.type in {'NUMPAD_0', 'NUMPAD_1', 'NUMPAD_2', 'NUMPAD_3', 'NUMPAD_4', 'NUMPAD_5',
-            'NUMPAD_6', 'NUMPAD_7', 'NUMPAD_8', 'NUMPAD_9', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE',
-            'SIX', 'SEVEN', 'EIGHT', 'NINE',
-        }:
+                            'NUMPAD_6', 'NUMPAD_7', 'NUMPAD_8', 'NUMPAD_9', 'ONE', 'TWO', 'THREE',
+                            'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE',
+                            }:
             if tag_rna.type == 'BOOLEAN':  # 0 or 1, not higher
                 self.tag_value = 0 if self.tag_value == 0 else 1
             elif tag_rna.type == 'INT':  # Clamp to user-defined range
@@ -330,7 +329,7 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         # Assign the new tag value
         self.execute(context)
 
-        # Request a redraw so that the custom shot tags redraw.
+        # Request redraw so that the custom shot tags redraw.
         context.area.tag_redraw()
 
         return {'FINISHED'}
@@ -352,7 +351,7 @@ class ThumbnailSelectTool(WorkSpaceTool):
 
     bl_idname = "edit_breakdown.thumbnail_select_tool"
     bl_label = "Thumbnail Select"
-    bl_description = "Select shot Thumbnails"
+    bl_description = "Select shot thumbnails"
     bl_icon = "ops.generic.select_box"
     bl_widget = None
     bl_keymap = (
@@ -482,13 +481,17 @@ class ThumbnailTagTool(WorkSpaceTool):
         ),
     )
 
+    @staticmethod
     def draw_settings(context, layout, tool):
+        """Draw this tool's settings in the toolbar layout when it is the active tool."""
+
         props = tool.operator_properties("edit_breakdown.thumbnail_tag")
 
         if not props.tag:
+            layout.enabled = False
             layout.label(
-                icon='QUESTION',
-                text="Shot properties can be configured in the edit breakdown add-on settings",
+                text="Tag: Shot properties can be configured in the 'Edit Breakdown - Config' "
+                     "side panel",
             )
             return
         layout.prop(props, "tag")

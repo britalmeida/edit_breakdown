@@ -21,7 +21,6 @@
 import logging
 
 import bgl
-import blf
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
@@ -35,7 +34,7 @@ background_color = (0.18, 0.18, 0.18, 1.0)
 hover_effect_color = (1.0, 1.0, 1.0, 0.05)
 theme_selected_object = bpy.context.preferences.themes['Default'].view_3d.object_selected
 theme_active_object = bpy.context.preferences.themes['Default'].view_3d.object_active
-selection_color = (theme_active_object.r, theme_active_object.g, theme_active_object.b, 1.0)
+selection_color = (theme_active_object[0], theme_active_object[1], theme_active_object[2], 1.0)
 
 # Shaders and batches
 
@@ -61,7 +60,7 @@ def draw_background(size):
     """Draw a solid rectangle with the background color with the given size"""
 
     with gpu.matrix.push_pop():
-        gpu.matrix.translate((0, 0))
+        gpu.matrix.translate([0, 0])
         gpu.matrix.scale(size)
 
         ucolor_2d_shader.bind()
@@ -130,18 +129,3 @@ def draw_thumbnails(thumbnail_images, size):
             image_2d_shader.bind()
             image_2d_shader.uniform_int("image", 0)
             image_2d_batch.draw(image_2d_shader)
-
-
-# Font ####################################################################
-
-font_info = {
-    "font_id": 0,  # Default font.
-    "handler": None,
-}
-
-
-def draw_text(self, context):
-    font_id = font_info["font_id"]
-    blf.position(font_id, 600, 80, 0)
-    blf.size(font_id, 16, 72)
-    blf.draw(font_id, "Frog")

@@ -52,7 +52,7 @@ class SEQUENCER_OT_add_custom_shot_prop(Operator):
         user_configured_props = scene.edit_breakdown.shot_custom_props
 
         new_prop = user_configured_props.add()
-        # Generate an unique identifier for the property that will never be changed.
+        # Generate a unique identifier for the property that will never be changed.
         new_prop.identifier = f"cp_{binascii.hexlify(os.urandom(4)).decode()}"
 
         # Generate a random color
@@ -175,12 +175,10 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
 
         def is_prop_already_used(shots, prop_id):
             """Check if any shot already has data introduced by the user for the given property."""
-            is_used = False
             for shot in shots:
                 if shot.is_property_set(prop_id):
-                    is_used = True
-                    break
-            return is_used
+                    return True
+            return False
 
         def get_prop_used_range(shots, prop_id):
             """Get the minimum and maximum values actually in use for the given property."""
@@ -211,7 +209,8 @@ class SEQUENCER_OT_edit_custom_shot_prop(Operator):
             if is_used and (self.range_min > min_used_val or self.range_max < max_used_val):
                 col.label(
                     icon='ERROR',  # Actually the triangle warning icon
-                    text="There is existing data outside the new range. Values outside the range will be clamped.",
+                    text="There is existing data outside the new range. "
+                         "Values outside the range will be clamped.",
                 )
         elif self.data_type == 'ENUM_VAL' or self.data_type == 'ENUM_FLAG':
             col.prop(self, "enum_items")
