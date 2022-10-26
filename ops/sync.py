@@ -118,7 +118,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             if path.suffix == ".jpg":
                 path.unlink()
 
-        # Render a thumbnail to disk per each frame
+        # Render a thumbnail to disk per shot.
         log.info("Creating thumbnails...")
         with self.override_render_settings(context):
             for strip in eb_strips:
