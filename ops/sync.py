@@ -156,7 +156,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
             if strip_match:
                 # Update data.
                 log.debug(f"Update shot info {i} - {shot.name}")
-                shot.frame_start = int(strip_match.frame_start)
+                shot.frame_start = int(strip_match.frame_final_start)
                 shot.frame_count = int(strip_match.frame_final_end - strip_match.frame_final_start)
                 shot.thumbnail_file = f'{str(get_thumbnail_frame(strip_match))}.jpg'
             else:

@@ -62,12 +62,12 @@ def select_shot(scene, new_selected_thumbnail_idx):
 def update_selected_shot(scene):
     """Callback when the current frame is changed."""
 
-    # Find the shot that starts before the current frame.
+    # Find a shot that contains the current frame.
     shot_idx_to_select = -1
     shots = scene.edit_breakdown.shots
     for i, shot in enumerate(shots):
-        if shot.frame_start > scene.frame_current:
-            shot_idx_to_select = i - 1
+        if shot.frame_start + shot.frame_count > scene.frame_current >= shot.frame_start:
+            shot_idx_to_select = i
             break
 
     select_shot(scene, shot_idx_to_select)
