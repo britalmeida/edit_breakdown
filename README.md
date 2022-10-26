@@ -4,8 +4,11 @@ Get insight on the complexity of an edit.
 
 ## Usage (WIP)
 1. In the `Sequencer`, **add new color strips** to represent each shot in the edit.
-2. Mark the color strips for use in the Edit Breakdown in `Strip > Add to Edit Breakdown`.
-2. Open a new `Sequencer` area in `Preview` mode, and toggle the Edit Breakdown view on the right side of the header (temp: called `Display Frames`).
+   1. Mark the color strips for use in the Edit Breakdown in `Strip > Add to Edit Breakdown`.
+   2. Workflow Suggestion: add a single color strip under the edit, add it to the Edit Breakdown, then use `K` to blade the strip while playing.
+2. Open a new `Sequencer` area in `Preview` mode
+   1. Toggle the Edit Breakdown view on the right side of the header (temp: called `Display Frames`).
+   2. Enable `View > Tool Settings` and from the `Toolbar (T)` select the `Tag Tool`.
 3. Click the **Sync** button to generate shots and thumbnails. Syncing is manual.
 4. Optionally, add Scenes in Edit Breakdown 'Config' on the Preview right-side N panel. Select the shot color strips, a scene, and click the assign button next to the scenes list.
 

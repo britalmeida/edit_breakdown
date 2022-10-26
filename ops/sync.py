@@ -249,6 +249,11 @@ class SEQUENCER_OT_use_strip_in_edit_breakdown(Operator):
         for s in strips:
             if s.select:
                 s.use_for_edit_breakdown = self.should_add
+                # Assign a new color to clearly signal a change in the strip.
+                s.color = (0.43, 0.30, 0.55)
+                # Set as fully transparent/opaque to not interfere with the edit.
+                s.blend_type = 'ALPHA_OVER'
+                s.blend_alpha = float(not self.should_add)
 
         return {'FINISHED'}
 

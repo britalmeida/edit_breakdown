@@ -369,10 +369,10 @@ class SEQUENCER_OT_assign_shots_to_scene(Operator):
     def execute(self, context):
         """Called to finish this operator's action."""
 
-        edit_breakdown = context.scene.edit_breakdown
-        selected_eb_scene = edit_breakdown.scenes[edit_breakdown.active_scene_idx]
+        eb = context.scene.edit_breakdown
+        selected_eb_scene = eb.scenes[eb.active_scene_idx]
 
-        shots = edit_breakdown.shots
+        shots = eb.shots
         strips = bpy.context.scene.sequence_editor.sequences
         selected_eb_strips = [s for s in strips if s.use_for_edit_breakdown and s.select]
 
@@ -387,6 +387,11 @@ class SEQUENCER_OT_assign_shots_to_scene(Operator):
             if shot and selected_eb_scene:
                 shot.scene_uuid = selected_eb_scene.uuid
                 eb_scene_color = selected_eb_scene.color[0:3]
+            else:
+                log.error(f"Error Assigning shots to an Edit Breakdown Scene\n"
+                          f"  Scene: {selected_eb_scene.name if selected_eb_scene else eb.active_scene_idx}\n"
+                          f"  Strip: {strip.name}{'' if shot else 'shot not found'}")
+                shot.scene_uuid = ""
             strip.color = eb_scene_color
 
         return {'FINISHED'}

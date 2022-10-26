@@ -189,7 +189,10 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
                 prop_ids.append(prop.identifier)
 
         if prop_ids:
-            current_int_value = self["tag"]
+            # It may happen that Blender calls get before the first set and 'tag' won't exist yet.
+            # Repro: when creating the very first custom property with the tag tool on.
+            # In that case, assume the value to tag will be zero (first one).
+            current_int_value = self["tag"] if "tag" in self else 0
 
             for i, prop_id in enumerate(prop_ids):
                 # If the backup enum value as string was not set yet, set it
