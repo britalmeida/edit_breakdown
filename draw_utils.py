@@ -20,7 +20,6 @@
 
 import logging
 
-import bgl
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
@@ -71,17 +70,17 @@ def draw_background(size):
 def draw_hover_highlight(position, size):
     """Draw a rectangular highlight"""
 
-    bgl.glEnable(bgl.GL_BLEND)
-
     with gpu.matrix.push_pop():
         gpu.matrix.translate(position)
         gpu.matrix.scale(size)
+
+        gpu.state.blend_set('ALPHA')
 
         ucolor_2d_shader.bind()
         ucolor_2d_shader.uniform_float("color", hover_effect_color)
         ucolor_2d_rect_batch.draw(ucolor_2d_shader)
 
-    bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('NONE')
 
 
 def draw_selected_frame(position, size):
@@ -98,27 +97,25 @@ def draw_selected_frame(position, size):
 
 def draw_boolean_tag(position, size, color):
 
-    bgl.glEnable(bgl.GL_BLEND)
-
     with gpu.matrix.push_pop():
         gpu.matrix.translate(position)
         gpu.matrix.scale(size)
 
         # Render a colored rectangle
+        gpu.state.blend_set('ALPHA')
+
         ucolor_2d_shader.bind()
         ucolor_2d_shader.uniform_float("color", color)
         ucolor_2d_rect_batch.draw(ucolor_2d_shader)
 
-    bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('NONE')
 
 
 def draw_thumbnails(thumbnail_images, size):
 
-    bgl.glActiveTexture(bgl.GL_TEXTURE0)
-
     for img in thumbnail_images:
-        # Bind the image texture.
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, img.id_image.bindcode)
+        # Get the GPU image texture.
+        texture = gpu.texture.from_image(img.id_image)
 
         # Push the position and image size (pop when out of scope).
         with gpu.matrix.push_pop():
@@ -127,5 +124,5 @@ def draw_thumbnails(thumbnail_images, size):
 
             # Bind the image shader and render
             image_2d_shader.bind()
-            image_2d_shader.uniform_int("image", 0)
+            image_2d_shader.uniform_sampler("image", texture)
             image_2d_batch.draw(image_2d_shader)
