@@ -326,10 +326,6 @@ def fit_thumbnails_in_group():
             thumbnail_images[shot_idx].group_idx = scene_idx
             thumbnail_images[shot_idx].pos_in_group = len(group.shot_ids) - 1
 
-    print(f"Assigned shots to {len(thumbnail_groups)} groups")
-    for i, group in enumerate(thumbnail_groups):
-        print(f"{i}: {group.name}, {len(group.shot_ids)}")
-
     # Determine positions based on numbers
 
     global thumbnail_size
@@ -386,10 +382,9 @@ def fit_thumbnails_in_group():
     num_images_per_col = 0
     for group in thumbnail_groups:
         rows = math.ceil(len(group.shot_ids) / num_images_per_row)
-        print(f"{group.name}, rows: {rows}")
         group.shot_rows = rows
         num_images_per_col += rows
-    print(
+    log.debug(
         f"num_images_per_col {num_images_per_col} space "
         f"{num_images_per_col * thumbnail_size[1]} > available space {available_h} ? "
     )
@@ -402,12 +397,11 @@ def fit_thumbnails_in_group():
         num_images_per_col = 0
         for group in thumbnail_groups:
             rows = math.ceil(len(group.shot_ids) / num_images_per_row)
-            print(f"{group.name}, rows: {rows}")
             group.shot_rows = rows
             num_images_per_col += rows
 
-        print(f"[row/col] {num_images_per_row} {num_images_per_col} ? ")
-        print(
+        log.debug(f"[row/col] {num_images_per_row} {num_images_per_col} ? ")
+        log.debug(
             f"num_images_per_col {num_images_per_col} space "
             f"{num_images_per_col * thumbnail_size[1]} > available space {available_h} ? "
         )
@@ -486,7 +480,6 @@ def fit_thumbnails_in_group():
         bar_height = thumbnail_step_y * group.shot_rows - spacing[1]/2 + title_font_size
         title_top = group.name_pos[1] + font_size
         group.color_rect = (start_pos_x-bar_width, title_top - bar_height, bar_width*0.5, bar_height)
-        print(group.color_rect)
 
     # Set the position of each thumbnail
     for img in thumbnail_images:
