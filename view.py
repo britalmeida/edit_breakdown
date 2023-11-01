@@ -121,7 +121,7 @@ def load_edit_thumbnails():
     # Ensure there are no cached thumbnails
     thumbnail_images.clear()
 
-    addon_prefs = bpy.context.preferences.addons['edit_breakdown'].preferences
+    addon_prefs = bpy.context.preferences.addons[__package__].preferences
     folder_name = addon_prefs.edit_shots_folder
 
     try:
