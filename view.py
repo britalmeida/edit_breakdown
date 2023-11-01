@@ -547,7 +547,7 @@ def draw_edit_thumbnails():
         font_id = 0  # Default font.
         system_prefs = bpy.context.preferences.system
         font_size = 12 * system_prefs.ui_scale
-        blf.size(font_id, font_size, 72)
+        blf.size(font_id, font_size)
         blf.color(font_id, 0.9, 0.9, 0.9, 1.0)
         for group in thumbnail_groups:
             blf.position(font_id, group.name_pos[0], group.name_pos[1], 0)

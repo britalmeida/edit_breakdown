@@ -42,14 +42,14 @@ line_indices = ((0, 1), (1, 2), (2, 3), (3, 0))
 rect_indices = ((0, 1, 2), (2, 1, 3))
 rect_coords = ((0, 0), (1, 0), (1, 1), (0, 1))
 
-ucolor_2d_shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+ucolor_2d_shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 ucolor_2d_rect_batch = batch_for_shader(ucolor_2d_shader, 'TRI_FAN', {"pos": rect_coords})
 
 ucolor_lines_rect_batch = batch_for_shader(
     ucolor_2d_shader, 'LINES', {"pos": rect_coords}, indices=line_indices
 )
 
-image_2d_shader = gpu.shader.from_builtin('2D_IMAGE')
+image_2d_shader = gpu.shader.from_builtin('IMAGE')
 image_2d_batch = batch_for_shader(
     image_2d_shader, 'TRI_FAN', {"pos": rect_coords, "texCoord": rect_coords}
 )
