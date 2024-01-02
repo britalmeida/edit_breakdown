@@ -1,5 +1,11 @@
+# Python
 __pycache__/
 .venv
 .python-version
+
+# IDEs
 *.code-workspace
 .idea/
+
+# OS
+.DS_Store
