@@ -34,6 +34,7 @@ from .. import data
 from .. import tools
 from .. import view
 
+package_name = pathlib.Path(__file__).parent.parent.name
 log = logging.getLogger(__name__)
 
 
@@ -75,7 +76,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     def save_render(self, datablock, file_name):
         """Save the current render image to disk"""
 
-        addon_prefs = bpy.context.preferences.addons[__package__].preferences
+        addon_prefs = bpy.context.preferences.addons[package_name].preferences
         folder_name = addon_prefs.edit_shots_folder
 
         # Ensure folder exists
@@ -110,7 +111,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
         view.hovered_thumbnail_idx = -1
 
         # Ensure the thumbnails folder exists and clear old thumbnails.
-        addon_prefs = bpy.context.preferences.addons[__package__].preferences
+        addon_prefs = bpy.context.preferences.addons[package_name].preferences
         folder_name = addon_prefs.edit_shots_folder
         folder_path = pathlib.Path(folder_name)
         folder_path.mkdir(parents=True, exist_ok=True)

@@ -20,6 +20,7 @@
 
 import hashlib
 import logging
+import pathlib
 
 import bpy
 from bpy.app.handlers import persistent
@@ -39,6 +40,7 @@ from bpy.props import (
 
 from . import utils
 
+package_name = pathlib.Path(__file__).parent.name
 log = logging.getLogger(__name__)
 
 
@@ -314,7 +316,7 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
 
 class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
-    bl_idname = "edit_breakdown"
+    bl_idname = package_name
 
     def get_thumbnails_dir(self) -> str:
         """Generate a path based on get_datadir and the current file name.
