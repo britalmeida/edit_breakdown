@@ -640,6 +640,14 @@ def draw_overlay():
     if not is_thumbnail_view():
         return
 
+    # Early out in case of an empty edit, or if the thumbnails failed to generate.
+    # Thumbnails should match the existing shots edit breakdown data from the last sync,
+    # but if for some reason they don't (e.g. blend file came from another workstation and this one
+    # doesn't have disk space / permissions / wtv to render the thumbnails), then it doesn't
+    # help to have additional errors trying to draw overlays for the thumbnails.
+    if not thumbnail_images:
+        return
+
     # Draw property values from the Tag Tool on top of each thumbnail.
     draw_tool_active_tag()
 
