@@ -128,6 +128,12 @@ def load_edit_thumbnails():
 
     try:
         for filename in os.listdir(folder_name):
+            file_basename = filename.split('.')[0]
+            # Avoid filenames that don't have the naming convention 123.jpg, with 123 = frame number.
+            # This is likely to happen with .DS_Store files.
+            if not file_basename.isdigit():
+                continue
+
             img = ThumbnailImage()
             img.id_image = load_image(
                 filename,
@@ -142,7 +148,7 @@ def load_edit_thumbnails():
                 force_reload=False,
             )
             thumbnail_images.append(img)
-            img.name = int(filename.split('.')[0])
+            img.name = int(file_basename)
     except FileNotFoundError:
         # self.report({'ERROR'}, # Need an operator
         log.warning(f"Reading thumbnail images from '{folder_name}' failed: folder does not exist.")
