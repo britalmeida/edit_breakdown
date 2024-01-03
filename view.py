@@ -160,13 +160,14 @@ def load_edit_thumbnails():
         if img.id_image.gl_load():
             raise Exception()
 
+    # Cache the thumbnails resolution on disk, which should be the same for all of them.
     global original_image_size
     try:
         original_image_size = thumbnail_images[0].id_image.size
     except ValueError:
         original_image_size = (100, 100)
 
-    log.info(f"Loaded {len(thumbnail_images)} images.")
+    log.info(f"(Re)loaded {len(thumbnail_images)} thumbnail images from disk.")
 
 
 def fit_thumbnails_in_region():
@@ -532,7 +533,10 @@ def draw_edit_thumbnails():
             # noinspection PyStatementEffect
             thumbnail_images[0].id_image.bindcode
         except ReferenceError:  # StructRNA of type Image has been removed
+            # Reload the images from disk and layout the new instances in the current space.
             load_edit_thumbnails()
+            fit_thumbnails_in_region()
+
 
     # Recalculate the thumbnail positions when the available drawing space changes.
     prev_draw_region = thumbnail_draw_region
