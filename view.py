@@ -164,7 +164,7 @@ def load_edit_thumbnails():
     global original_image_size
     try:
         original_image_size = thumbnail_images[0].id_image.size
-    except ValueError:
+    except (ValueError, IndexError):
         original_image_size = (100, 100)
 
     log.info(f"(Re)loaded {len(thumbnail_images)} thumbnail images from disk.")
@@ -520,6 +520,12 @@ def draw_edit_thumbnails():
     """Render the edit thumbnails"""
 
     if not is_thumbnail_view():
+        return
+
+    # Early out: nothing to render on an empty edit.
+    # Users need to press 'Sync' to generate EB shots and thumbnails.
+    shots = bpy.context.scene.edit_breakdown.shots
+    if not shots:
         return
 
     # Load the images the first time they're needed.
