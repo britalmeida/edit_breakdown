@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Wip wip...
 
+## [0.4.0] - 2024-01-03
+
+### Shiny and New
+- Added `Generate Edit Breakdown Thumbnails` operator which can be run independently from the Sync
+to help with troubleshooting. It is available from the search (no shortcut, no button).
+
+### Fixed
+- Fixed "KeyError" when doing 'Sync'. It was introduced by v0.3.0.
+- Fixed errors when there are issues with the thumbnails on disk.  
+  It's now resillient to a missing/deleted thumbnails folder and to it having a .DS_Store file.
+- Fixed thumbnails jumping/disappearing after multiple undo steps.
+
+
+
 ## [0.3.0] - 2023-11-01
 
 ### Fixed
