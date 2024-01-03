@@ -43,11 +43,11 @@ def get_thumbnail_frame(strip):
     return strip.frame_final_start + strip_mid_frame
 
 
-class SEQUENCER_OT_sync_edit_breakdown(Operator):
-    bl_idname = "edit_breakdown.sync_edit_breakdown"
-    bl_label = "Sync Edit Breakdown"
-    bl_description = "Ensure the edit breakdown is up-to-date with the edit"
-    bl_options = {'REGISTER', 'UNDO'}
+class SEQUENCER_OT_generate_edit_breakdown_thumbnails(Operator):
+    bl_idname = "edit_breakdown.generate_edit_breakdown_thumbnails"
+    bl_label = "Generate Edit Breakdown Thumbnails"
+    bl_description = "Refresh thumbnail images on disk"
+    bl_options = {'REGISTER'}
 
     @contextlib.contextmanager
     def override_render_settings(self, context, thumbnail_width=256):
@@ -93,17 +93,15 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
     def execute(self, context):
         """Called to finish this operator's action.
 
-        Recreate the edit breakdown data based on the current edit.
+        (Re)create the thumbnail images from the current edit strips.
         """
 
-        log.info("Syncing sequencer strips to thumbnails and shot data...")
+        log.info("Creating thumbnails...")
         time_start = time.time()
 
         scene = context.scene
-        sequence_ed = scene.sequence_editor
-        strips = sequence_ed.sequences
+        strips = scene.sequence_editor.sequences
         eb_strips = [s for s in strips if s.use_for_edit_breakdown]
-        shots = scene.edit_breakdown.shots
 
         # Clear the previous runtime data.
         view.thumbnail_images.clear()
@@ -120,7 +118,6 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 path.unlink()
 
         # Render a thumbnail to disk per shot.
-        log.info("Creating thumbnails...")
         with self.override_render_settings(context):
             for strip in eb_strips:
                 scene.frame_current = get_thumbnail_frame(strip)
@@ -128,6 +125,39 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 file_name = f'{str(scene.frame_current)}.jpg'
                 self.save_render(bpy.data.images['Render Result'], file_name)
         log.info(f"Thumbnails generated in {(time.time() - time_start):.2f}s")
+
+        # Update the thumbnails view
+        view.load_edit_thumbnails()
+
+        # Position the images according to the available space.
+        view.fit_thumbnails_in_region()
+
+        return {'FINISHED'}
+
+
+class SEQUENCER_OT_sync_edit_breakdown(Operator):
+    bl_idname = "edit_breakdown.sync_edit_breakdown"
+    bl_label = "Sync Edit Breakdown"
+    bl_description = "Ensure the edit breakdown is up-to-date with the edit"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        """Called to finish this operator's action.
+
+        Recreate the edit breakdown data based on the current edit.
+        """
+
+        log.info("Syncing sequencer strips to thumbnails and shot data...")
+
+        scene = context.scene
+        sequence_ed = scene.sequence_editor
+        strips = sequence_ed.sequences
+        eb_strips = [s for s in strips if s.use_for_edit_breakdown]
+        shots = scene.edit_breakdown.shots
 
         # Load data from the sequence strips marked for use in the edit breakdown
         # Match existing strips and existing shots
@@ -174,14 +204,10 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 shots.move(insert_pos, insert_pos + 1)
                 insert_pos -= 1
 
-        # Update the thumbnails view
-        view.load_edit_thumbnails()
+        # Update the thumbnails.
+        bpy.ops.edit_breakdown.generate_edit_breakdown_thumbnails()
         tools.update_selected_shot(scene)
 
-        # Position the images according to the available space.
-        view.fit_thumbnails_in_region()
-
-        log.info(f"Syncing done in {(time.time() - time_start):.2f}s")
         return {'FINISHED'}
 
 
@@ -271,6 +297,7 @@ def strip_menu_draw(self, context):
 
 
 classes = (
+    SEQUENCER_OT_generate_edit_breakdown_thumbnails,
     SEQUENCER_OT_sync_edit_breakdown,
     SEQUENCER_OT_copy_edit_breakdown_as_csv,
     SEQUENCER_OT_use_strip_in_edit_breakdown,
