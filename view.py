@@ -129,7 +129,7 @@ def load_edit_thumbnails():
     try:
         for filename in os.listdir(folder_name):
             file_basename = filename.split('.')[0]
-            # Avoid filenames that don't have the naming convention 123.jpg, with 123 = frame number.
+            # Avoid names that don't have the naming convention '123.jpg', with 123 = frame number.
             # This is likely to happen with .DS_Store files.
             if not file_basename.isdigit():
                 continue
