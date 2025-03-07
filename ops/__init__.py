@@ -25,7 +25,6 @@ from .. import view
 
 log = logging.getLogger(__name__)
 
-
 if "sync" in locals():
     import importlib
 
@@ -40,11 +39,10 @@ else:
 
 # UI ##############################################################################################
 
-
 def draw_sequencer_header_extension_right(self, context):
-    """"Draw controls at the right end of the Sequence Preview Editor"""
+    """Draw controls at the right end of the Sequence Preview Editor"""
     editor = context.space_data
-    if not(editor.type == 'SEQUENCE_EDITOR' and editor.view_type == 'PREVIEW'):
+    if not (editor.type == 'SEQUENCE_EDITOR' and editor.view_type == 'PREVIEW'):
         return
 
     layout = self.layout
@@ -59,7 +57,6 @@ def draw_sequencer_header_extension_right(self, context):
 
 # Add-on Registration #############################################################################
 
-
 def register():
     scene.register()
     shot.register()
@@ -69,7 +66,6 @@ def register():
 
 
 def unregister():
-
     bpy.types.SEQUENCER_HT_header.remove(draw_sequencer_header_extension_right)
 
     sync.unregister()

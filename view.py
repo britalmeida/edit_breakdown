@@ -21,7 +21,6 @@
 import logging
 import math
 import os
-import pathlib
 
 import blf
 import bpy
@@ -542,7 +541,6 @@ def draw_edit_thumbnails():
             # Reload the images from disk and layout the new instances in the current space.
             load_edit_thumbnails()
             fit_thumbnails_in_region()
-
 
     # Recalculate the thumbnail positions when the available drawing space changes.
     prev_draw_region = thumbnail_draw_region

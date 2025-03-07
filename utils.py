@@ -82,6 +82,8 @@ def get_datadir() -> pathlib.Path:
         return home / ".local/share"
     elif sys.platform == "darwin":
         return home / "Library/Application Support"
+    else:
+        raise RuntimeError("Unsupported platform")
 
 
 def create_unique_name(base_name: str, existing_objects: list) -> str:

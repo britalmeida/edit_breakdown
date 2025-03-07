@@ -20,7 +20,6 @@
 
 import hashlib
 import logging
-import pathlib
 
 import bpy
 from bpy.app.handlers import persistent
@@ -349,7 +348,6 @@ class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
 
 # Property Registration On File Load ##############################################################
 
-
 def register_custom_prop(data_cls, prop):
     prop_ctor = ""
     extra_prop_config = ""
@@ -463,11 +461,11 @@ def register():
     )
 
     # TODO Extending space data doesn't work?
-    #bpy.types.SpaceSequenceEditor.show_edit_breakdown_view = BoolProperty(
-    #    name="Show Edit Breakdown",
-    #    default=False,
-    #    description="Display the Edit Breakdown thumbnail grid view",
-    #)
+    # bpy.types.SpaceSequenceEditor.show_edit_breakdown_view = BoolProperty(
+    #     name="Show Edit Breakdown",
+    #     default=False,
+    #     description="Display the Edit Breakdown thumbnail grid view",
+    # )
 
     bpy.app.handlers.load_pre.append(unregister_custom_properties)
     bpy.app.handlers.load_post.append(register_custom_properties)
@@ -478,7 +476,7 @@ def unregister():
     bpy.app.handlers.load_pre.remove(unregister_custom_properties)
     bpy.app.handlers.load_post.remove(register_custom_properties)
 
-    #del bpy.types.SpaceSequenceEditor.show_edit_breakdown_view
+    # del bpy.types.SpaceSequenceEditor.show_edit_breakdown_view
     del bpy.types.Sequence.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 
