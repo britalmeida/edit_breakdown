@@ -447,6 +447,10 @@ classes = (
     SEQUENCER_EditBreakdown_Data,
 )
 
+# Blender 4.4 renamed "Sequence" to "Strip".
+# This script needs to access one or the other depending on the Blender version.
+USE_STRIPS = bpy.app.version[0] >= 4 and bpy.app.version[1] >= 4
+
 
 def register():
 
@@ -459,11 +463,15 @@ def register():
         description="Shot data used by the Edit Breakdown add-on.",
     )
 
-    bpy.types.Sequence.use_for_edit_breakdown = BoolProperty(
+    use_for_edit_breakdown = BoolProperty(
         name="Use For Edit Breakdown",
         default=False,
         description="If this strip should be included as a shot in the edit breakdown view",
     )
+    if USE_STRIPS:
+        bpy.types.Strip.use_for_edit_breakdown = use_for_edit_breakdown
+    else:
+        bpy.types.Sequence.use_for_edit_breakdown = use_for_edit_breakdown
 
     # TODO Extending space data doesn't work?
     # bpy.types.SpaceSequenceEditor.show_edit_breakdown_view = BoolProperty(
@@ -482,7 +490,10 @@ def unregister():
     bpy.app.handlers.load_post.remove(register_custom_properties)
 
     # del bpy.types.SpaceSequenceEditor.show_edit_breakdown_view
-    del bpy.types.Sequence.use_for_edit_breakdown
+    if USE_STRIPS:
+        del bpy.types.Strip.use_for_edit_breakdown
+    else:
+        del bpy.types.Sequence.use_for_edit_breakdown
     del bpy.types.Scene.edit_breakdown
 
     for cls in reversed(classes):

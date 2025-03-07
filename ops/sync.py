@@ -43,6 +43,19 @@ from .. import view
 log = logging.getLogger(__name__)
 
 
+# Blender 4.4 renamed "Sequence" to "Strip".
+# This script needs to access one or the other depending on the Blender version.
+USE_STRIPS = bpy.app.version[0] >= 4 and bpy.app.version[1] >= 4
+
+
+def get_strips(sequence_editor):
+    if USE_STRIPS:
+        strips = sequence_editor.strips
+    else:
+        strips = sequence_editor.sequences
+    return strips
+
+
 def get_thumbnail_frame(strip):
     strip_mid_frame = math.floor(strip.frame_final_duration / 2)
     return strip.frame_final_start + strip_mid_frame
@@ -105,7 +118,7 @@ class SEQUENCER_OT_generate_edit_breakdown_thumbnails(Operator):
         time_start = time.time()
 
         scene = context.scene
-        strips = scene.sequence_editor.sequences
+        strips = get_strips(scene.sequence_editor)
         eb_strips = [s for s in strips if s.use_for_edit_breakdown]
 
         # Clear the previous runtime data.
@@ -160,7 +173,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
 
         scene = context.scene
         sequence_ed = scene.sequence_editor
-        strips = sequence_ed.sequences
+        strips = get_strips(sequence_ed)
         eb_strips = [s for s in strips if s.use_for_edit_breakdown]
         shots = scene.edit_breakdown.shots
 
@@ -180,7 +193,7 @@ class SEQUENCER_OT_sync_edit_breakdown(Operator):
                 new_shot.frame_start = int(strip.frame_final_start)
                 new_shot.frame_count = int(strip.frame_final_end - strip.frame_final_start)
 
-                # Associate the shot with the sequence by name
+                # Associate the shot with the sequencer strip by name
                 new_shot.strip_name = strip.name
 
         # Update all shots with the associated strip data.
@@ -276,7 +289,7 @@ class SEQUENCER_OT_use_strip_in_edit_breakdown(Operator):
     def execute(self, context):
         """Called to finish this operator's action."""
 
-        strips = context.scene.sequence_editor.sequences
+        strips = get_strips(context.scene.sequence_editor)
 
         for s in strips:
             if s.select:
