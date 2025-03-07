@@ -37,9 +37,14 @@ from bpy.props import (
     StringProperty,
 )
 
+from . import ADDON_ID
 from . import utils
 
-package_name = pathlib.Path(__file__).parent.name
+# Note:
+# __name__  expected to be: (add-on) edit_breakdown.data
+#                       or  (extson) bl_ext.addons_dev.edit_breakdown.data
+# package_name  expected to be: edit_breakdown
+# package_name = pathlib.Path(__file__).parent.name
 log = logging.getLogger(__name__)
 
 
@@ -315,7 +320,7 @@ class SEQUENCER_EditBreakdown_Data(PropertyGroup):
 
 
 class SEQUENCER_EditBreakdown_Preferences(AddonPreferences):
-    bl_idname = package_name
+    bl_idname = ADDON_ID
 
     def get_thumbnails_dir(self) -> str:
         """Generate a path based on get_datadir and the current file name.

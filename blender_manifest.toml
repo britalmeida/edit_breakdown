@@ -1,0 +1,37 @@
+schema_version = "1.0.0"
+
+id = "edit_breakdown"
+version = "0.4.0"
+type = "add-on"
+
+name = "Edit Breakdown"
+tagline = "Get insight on the complexity of an edit"
+tags = ["Sequencer"]
+
+license = ["SPDX:GPL-3.0-or-later"]
+
+blender_version_min = "3.3.0"
+
+maintainer = "Inês Almeida, Francesco Siddi"
+website = "https://github.com/britalmeida/blender_addon_edit_breakdown"
+
+[permissions]
+files = "Save thumbnails in a temporary folder"
+
+[build]
+paths = [
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "__init__.py",
+    "data.py",
+    "draw_utils.py",
+    "ops/__init__.py",
+    "ops/scene.py",
+    "ops/shot.py",
+    "ops/sync.py",
+    "panels.py",
+    "tools.py",
+    "utils.py",
+    "view.py",
+]

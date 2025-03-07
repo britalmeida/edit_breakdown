@@ -29,6 +29,13 @@ bl_info = {
     "category": "Sequencer",
 }
 
+# ID that Blender uses to register the add-on preferences. Expected to be:
+# (legacy add-on) edit_breakdown
+# (extension) bl_ext.blender_org.edit_breakdown
+#             or instead of 'blender_org' a user/dev defined string.
+ADDON_ID = __package__
+
+
 import logging
 
 if "draw_utils" in locals():

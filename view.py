@@ -26,9 +26,9 @@ import blf
 import bpy
 from bpy_extras.image_utils import load_image
 
+from . import ADDON_ID
 from . import draw_utils
 
-package_name = pathlib.Path(__file__).parent.name
 log = logging.getLogger(__name__)
 
 
@@ -122,7 +122,7 @@ def load_edit_thumbnails():
     # Ensure there are no cached thumbnails
     thumbnail_images.clear()
 
-    addon_prefs = bpy.context.preferences.addons[package_name].preferences
+    addon_prefs = bpy.context.preferences.addons[ADDON_ID].preferences
     folder_name = addon_prefs.edit_shots_folder
 
     try:

@@ -30,11 +30,16 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty
 
+from .. import ADDON_ID
 from .. import data
 from .. import tools
 from .. import view
 
-package_name = pathlib.Path(__file__).parent.parent.name
+# Note:
+# __name__  expected to be: (add-on) edit_breakdown.ops.sync
+#                       or  (extson) bl_ext.addons_dev.edit_breakdown.ops.sync
+# package_name  expected to be: edit_breakdown
+# package_name = pathlib.Path(__file__).parent.parent.name
 log = logging.getLogger(__name__)
 
 
@@ -76,7 +81,7 @@ class SEQUENCER_OT_generate_edit_breakdown_thumbnails(Operator):
     def save_render(self, datablock, file_name):
         """Save the current render image to disk"""
 
-        addon_prefs = bpy.context.preferences.addons[package_name].preferences
+        addon_prefs = bpy.context.preferences.addons[ADDON_ID].preferences
         folder_name = addon_prefs.edit_shots_folder
 
         # Ensure folder exists
@@ -109,7 +114,7 @@ class SEQUENCER_OT_generate_edit_breakdown_thumbnails(Operator):
         view.hovered_thumbnail_idx = -1
 
         # Ensure the thumbnails folder exists and clear old thumbnails.
-        addon_prefs = bpy.context.preferences.addons[package_name].preferences
+        addon_prefs = bpy.context.preferences.addons[ADDON_ID].preferences
         folder_name = addon_prefs.edit_shots_folder
         folder_path = pathlib.Path(folder_name)
         folder_path.mkdir(parents=True, exist_ok=True)
