@@ -348,6 +348,8 @@ class SEQUENCER_OT_thumbnail_tag(Operator):
         return {'FINISHED'}
 
 
+# TODO account for user keymap and preferred LMB or RMB interaction.
+
 class ThumbnailSelectTool(WorkSpaceTool):
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_context_mode = 'PREVIEW'

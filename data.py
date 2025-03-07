@@ -419,6 +419,8 @@ def register_custom_properties(scene):
     # Register custom scene properties
     pass
 
+    log.info("Done registering")
+
 
 @persistent
 def unregister_custom_properties(scene):
@@ -435,6 +437,8 @@ def unregister_custom_properties(scene):
 
     # Unregister custom scene properties
     pass
+
+    log.info("Done unregistering")
 
 
 # Add-on Registration #############################################################################
