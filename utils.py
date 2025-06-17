@@ -99,7 +99,7 @@ def create_unique_name(base_name: str, existing_objects: list) -> str:
     # Get the object names.
     existing_names = (ob.name for ob in existing_objects)
 
-    # If this is the first all of its name, no need to add a suffix.
+    # If this is the first of its name, no need to add a suffix.
     if base_name not in existing_names:
         return base_name
 
@@ -114,6 +114,7 @@ def create_unique_name(base_name: str, existing_objects: list) -> str:
         if min_index < num:
             break
         min_index = num + 1
+
     return f"{base_name}.{min_index:03d}"
 
 
